@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>fNIRS FW v1.0 개발 트래커</title>
+<style>
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --border:#E3E6EA;
+  --text:#1B2430; --dim:#6B7480;
+  --accent:#2C6E63; --due:#A23E58;
+  --g0:#6B5B95; --g1:#C97B3D; --g2:#4C8C6B; --g3:#3C7A9E; --g4:#AD8B12; --g5:#A23E58;
+  --st-todo:#E2555A; --st-todo-bg:#FDEBEC;
+  --st-mid:#D9A441; --st-mid-bg:#FBF1DD;
+  --st-done:#3F9142; --st-done-bg:#E7F4E8;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:14px; line-height:1.5;
+}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+header{
+  position:sticky; top:0; z-index:20; background:var(--surface);
+  border-bottom:1px solid var(--border); padding:14px 22px 0 22px;
+}
+.headtop{display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap;}
+h1{font-size:18px; margin:0 0 2px 0;}
+.subtitle{color:var(--dim); font-size:12.5px; margin:0 0 10px 0;}
+.stats{display:flex; gap:10px; flex-wrap:wrap;}
+.stat{
+  background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  padding:8px 14px; min-width:104px; text-align:center;
+}
+.stat .num{font-size:19px; font-weight:700;}
+.stat .lbl{font-size:11px; color:var(--dim); margin-top:1px;}
+nav{display:flex; gap:2px; margin-top:12px; overflow-x:auto;}
+nav button{
+  background:none; border:none; padding:10px 14px; font-size:13px; color:var(--dim);
+  cursor:pointer; border-bottom:2.5px solid transparent; white-space:nowrap;
+}
+nav button.active{color:var(--text); border-bottom-color:var(--accent); font-weight:600;}
+nav button:hover{color:var(--text);}
+main{padding:20px 22px 60px 22px; max-width:1500px; margin:0 auto;}
+section{display:none;}
+section.active{display:block;}
+h2{font-size:15px; margin:22px 0 8px 0; padding-bottom:6px; border-bottom:1px solid var(--border);}
+h2:first-child{margin-top:0;}
+p.hint{color:var(--dim); font-size:12.5px; margin:4px 0 12px 0;}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-bottom:16px;}
+
+table{border-collapse:collapse; width:100%; font-size:12.8px;}
+th{background:var(--text); color:#fff; text-align:left; padding:7px 9px; font-weight:600;}
+td{border-bottom:1px solid var(--border); padding:7px 9px; vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.note{color:var(--dim); font-size:11.3px; display:block; margin-top:2px;}
+.center{text-align:center;}
+
+.chip{display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; color:#fff;}
+.pill{display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700;}
+.pill.todo{background:var(--st-todo-bg); color:var(--st-todo);}
+.pill.mid{background:var(--st-mid-bg); color:var(--st-mid);}
+.pill.done{background:var(--st-done-bg); color:var(--st-done);}
+.pill.excl{background:#EEE; color:#999;}
+.prio{font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:5px; border:1px solid currentColor;}
+.prio.P0{color:#B33; }
+.prio.P1{color:#B37E00;}
+.prio.P2{color:#999;}
+
+.pctrow{display:flex; align-items:center; gap:6px;}
+input[type=number].pctinput{width:52px; padding:3px 4px; border:1px solid var(--border); border-radius:5px; font-size:12.5px; text-align:right;}
+.qbtn{border:1px solid var(--border); background:#fff; border-radius:5px; padding:2px 6px; font-size:10.5px; cursor:pointer; color:var(--dim);}
+.qbtn:hover{background:var(--bg);}
+input[type=checkbox]{width:16px; height:16px; cursor:pointer;}
+
+.grouphead td{background:#FAFAFB; font-weight:700; font-size:12px; padding-top:10px;}
+.groupbar-wrap{display:inline-block; width:110px; height:6px; background:#EEE; border-radius:3px; overflow:hidden; vertical-align:middle; margin-left:8px;}
+.groupbar-fill{height:100%;}
+
+/* Gantt */
+.ganttscroll{overflow-x:auto;}
+table.gantt{table-layout:fixed; font-size:10.5px;}
+table.gantt th, table.gantt td{border:none; padding:0; text-align:center;}
+table.gantt th.rowlabel, table.gantt td.rowlabel{
+  text-align:left; width:230px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  padding:3px 6px; border-right:1.5px solid #ccc; font-size:11px;
+}
+table.gantt col.daycol{width:34px;}
+table.gantt th.gh{padding:3px 0; color:var(--dim); font-weight:500; border-bottom:1px solid var(--border);}
+table.gantt th.gh.mark-target{color:var(--due); font-weight:700; background:#F7EAEE;}
+table.gantt td.daycell{height:28px; border-bottom:1px solid #F0F0F2;}
+.barwrap{position:relative; height:20px; margin:4px 3px; border-radius:4px; background:#F0F0F2;}
+.barfill{position:absolute; left:0; top:0; height:100%; border-radius:4px 0 0 4px;}
+.barfill.full{border-radius:4px;}
+.barpct{position:absolute; right:5px; top:50%; transform:translateY(-50%); font-size:9px; color:#fff; font-weight:700; text-shadow:0 1px 1px rgba(0,0,0,.25);}
+.barpct.dark{color:#444; text-shadow:none;}
+.legend{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:10px; font-size:12px;}
+.legend span.sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle;}
+
+.riskitem{display:flex; align-items:flex-start; gap:8px; padding:7px 0; border-bottom:1px solid var(--border);}
+.riskitem:last-child{border-bottom:none;}
+.riskitem.resolved{opacity:.5;}
+.riskitem.resolved .risktext{text-decoration:line-through;}
+
+.at-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);}
+.at-row:last-child{border-bottom:none;}
+.at-id{font-weight:700; width:52px; flex:0 0 auto;}
+.at-name{font-weight:600; width:150px; flex:0 0 auto;}
+.at-cond{color:var(--dim); flex:1;}
+
+.metabox td{border:1px solid var(--border); padding:6px 12px;}
+.metabox td.k{background:#FAFAFB; font-weight:700; width:120px;}
+
+.overview-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:900px){.overview-grid{grid-template-columns:1fr;}}
+.contra{border-left:4px solid #C62828; background:#FFF6F6; padding:8px 12px; border-radius:0 6px 6px 0; margin-bottom:8px; font-size:12.5px;}
+.contra b{color:#C62828;}
+.resetbar{margin-top:26px; text-align:right;}
+.resetbtn{background:none; border:1px solid var(--border); color:var(--dim); border-radius:6px; padding:6px 12px; font-size:11.5px; cursor:pointer;}
+.resetbtn:hover{border-color:#c66; color:#c66;}
+footer{text-align:center; color:var(--dim); font-size:11px; padding:14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="headtop">
+    <div>
+      <h1>fNIRS Wearable FW v1.0 개발 트래커</h1>
+      <div class="subtitle">Ban et al., Sci. Adv. 12, eaad2056 (2026) 기반 · 담당 Wade · 목표 완료일 2026-10-09(금) = 원 계획표 공식 Due Date (OTA v1.0 포함으로 재조정)</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="statOverall">–%</div><div class="lbl">FW 개발 진행률</div></div>
+      <div class="stat"><div class="num" id="statAT">–</div><div class="lbl">AT 통과 (v1.0)</div></div>
+      <div class="stat"><div class="num" id="statDday">–</div><div class="lbl">목표일까지 영업일</div></div>
+      <div class="stat"><div class="num" id="statUpdated">–</div><div class="lbl">마지막 업데이트</div></div>
+    </div>
+  </div>
+  <nav id="tabnav"></nav>
+</header>
+
+<main>
+  <section id="tab-overview"></section>
+  <section id="tab-analysis"></section>
+  <section id="tab-tasks"></section>
+  <section id="tab-gantt"></section>
+  <section id="tab-dayplan"></section>
+  <section id="tab-at"></section>
+  <section id="tab-risk"></section>
+  <section id="tab-review"></section>
+</main>
+
+<footer>진행 상황을 입력하면 로컬에 자동 저장되며, 체크리스트·그룹 진행률·간트차트가 같은 데이터를 기준으로 함께 갱신됩니다.</footer>
+
+<script>
+/* ============================== DATA ============================== */
+const GROUPS = [
+  {id:'0', name:'Baseline & Handover', color:'#6B5B95'},
+  {id:'1', name:'LED Drive & PWM', color:'#C97B3D'},
+  {id:'2', name:'Acquisition & Sync', color:'#4C8C6B'},
+  {id:'3', name:'Data Path & App', color:'#3C7A9E'},
+  {id:'4', name:'Power & Reliability', color:'#AD8B12'},
+  {id:'5', name:'FW Freeze / Release', color:'#A23E58'},
+];
+const GCOLOR = Object.fromEntries(GROUPS.map(g=>[g.id,g.color]));
+const GNAME  = Object.fromEntries(GROUPS.map(g=>[g.id,g.name]));
+
+// start/end are business-day indices (1..21), weekends do not exist on this axis.
+// excl:true means out of v1.0 schedule (not drawn on gantt, not counted in overall %)
+const TASKS = [
+  {id:'0-1', group:'0', name:'US 코드 인수 검토·펌웨어 코드/APK 소스코드 수령정리', owner:'Wade', prio:'P0', start:1, end:1, note:'완료 확인', def:100},
+  {id:'0-2', group:'0', name:'32MHz crystal 교체 후 펌웨어 포팅·부팅 검증', owner:'Wade', prio:'P0', start:1, end:1, note:'완료 확인', def:100},
+  {id:'0-3', group:'0', name:'클럭 트리/타이머 프리스케일 32MHz 기준 재계산 검증', owner:'Wade', prio:'P0', start:2, end:2, note:'', def:30},
+  {id:'0-4', group:'0', name:'논문 기반 개발 범위 확정', owner:'Wade', prio:'P0', start:3, end:3, note:'모순 3건 대응 방침·OTA 포함 여부 등 범위 결정 문서화', def:0},
+  {id:'1-1', group:'1', name:'PWM 주파수·듀티 조정 (LED 광강도 설정)', owner:'Wade', prio:'P0', start:4, end:4, note:'', def:10},
+  {id:'1-2', group:'1', name:'LED 정전류 드라이버·채널별 광강도 캘리브레이션', owner:'Wade', prio:'P0', start:5, end:5, note:'640/680/950nm 파트넘버 기준 순방향전압·전류 반영', def:0},
+  {id:'1-3', group:'1', name:'LED 통신(점등) 주기 결정 — source multiplexing 시퀀스', owner:'Wade', prio:'P0', start:6, end:7, note:'', def:0},
+  {id:'1-4', group:'1', name:'LED on/off settling time·dark period 확정', owner:'Wade', prio:'P0', start:8, end:8, note:'0.7℃/min 초기발열속도 반영', def:0},
+  {id:'2-1', group:'2', name:'Photodiode/ADC 샘플링 레이트·게인 확정', owner:'Wade', prio:'P0', start:9, end:9, note:'AS7341 채널별 개별 gain 구조', def:0},
+  {id:'2-2', group:'2', name:'LED-ADC 타임 멀티플렉싱 동기화 (source-detector timing)', owner:'Wade', prio:'P0', start:10, end:10, note:'', def:0},
+  {id:'2-3', group:'2', name:'Ambient light 제거 (dark-frame subtraction) 구현', owner:'Wade', prio:'P0', start:11, end:11, note:'', def:0},
+  {id:'2-4', group:'2', name:'모션/포화 검출 및 SQI(신호품질지표) 플래그', owner:'Wade', prio:'P1', start:12, end:12, note:'[신규] rigid/flex SNR 벤치마크 반영', def:0},
+  {id:'3-1', group:'3', name:'데이터 패킷 포맷·버전 필드 정의 (raw counts+상태바이트)', owner:'Wade', prio:'P0', start:13, end:13, note:'seq number·timestamp 포함', def:0},
+  {id:'3-2', group:'3', name:'BLE 전송 처리·손실패킷 검출/재전송 검증 (32MHz 기준)', owner:'Wade', prio:'P0', start:14, end:14, note:'', def:0},
+  {id:'3-3', group:'3', name:'APK 소스 연동 (펌웨어-실시간 스트리밍·로깅)', owner:'Wade', prio:'P1', start:15, end:15, note:'', def:0},
+  {id:'3-4', group:'3', name:'온보드 저장 vs 실시간 전송 정책·타임스탬프 확정', owner:'Wade', prio:'P2', start:16, end:16, note:'△ 재검토 후보 — 논문은 실시간 스트리밍만 사용, "목록 재검토" 탭 참고', def:0},
+  {id:'3-5', group:'3', name:'[신규] EEG/EOG epoch(30s/5s) 동기화 요구사항 검증', owner:'Wade', prio:'P1', start:16, end:16, note:'타임스탬프 정합성', def:0},
+  {id:'4-1', group:'4', name:'LED 듀티 기반 소비전류·발열 측정 및 41℃ 하드 보호 로직', owner:'Wade', prio:'P0', start:17, end:17, note:'최우선 안전기능', def:0},
+  {id:'4-2', group:'4', name:'OTA 펌웨어 업데이트·롤백 검증', owner:'Wade', prio:'P0', start:18, end:18, note:'v1.1 없음 — v1.0 범위로 복원', def:0},
+  {id:'4-3', group:'4', name:'장시간 연속성(누수/드리프트) 안정성 시험', owner:'Wade', prio:'P0', start:19, end:19, note:'목표 ≥5.5h', def:0},
+  {id:'4-4', group:'4', name:'펌웨어 파라미터 확정 문서화 (PWM/LED주기/샘플링/게인)', owner:'Wade', prio:'P1', start:19, end:19, note:'', def:0},
+  {id:'5-1', group:'5', name:'통합 회귀 테스트 (AT-01~AT-12 v1.0 해당 항목)', owner:'Wade', prio:'P0', start:20, end:20, note:'', def:0},
+  {id:'5-2', group:'5', name:'fNIRS FW v1.0 빌드 freeze·버전 태깅', owner:'Wade', prio:'P0', start:21, end:21, note:'', def:0},
+];
+
+const REVIEW_DOWNGRADE = [
+  {id:'RV-1', title:'3-4. 온보드 저장 vs 실시간 전송 정책·타임스탬프 확정',
+   body:'원 목록에 있던 항목이지만, 논문은 실시간 BLE 스트리밍으로 외부 컴퓨터에 저장하는 방식만 사용했고 온보드(플래시) 저장을 별도로 구현하지 않았습니다. 논문 재현 자체에는 필수가 아니므로, 우선순위를 P0→P2로 낮추고 "정책만 결정(짧은 BLE 단절 시 데이터 유실 허용 범위 정의)" 수준으로 축소하는 것을 제안합니다. Task 목록에서 완전히 지우지는 않았습니다 — 원래 계획표에 있던 항목이라 최종 결정은 팀 판단에 맡깁니다.'},
+];
+const REVIEW_ADD = [
+  {id:'RV-2', title:'배터리 과충전·과방전 보호 회로 인터페이스 검증 (신규 제안, 미포함)',
+   body:'논문은 110mAh/3.7V Li-Po 배터리를 사용한다고만 명시했고, 충전/방전 보호에 대한 언급이 없습니다. 하지만 실제 웨어러블 제품에서는 41℃ 열 보호 로직과 마찬가지로 배터리 과충전·과방전·UVLO 대응이 안전에 직결되는 항목입니다. 현재 21영업일 일정이 이미 여유 없이 꽉 찬 상태라 자동으로 일정에 추가하지 않았습니다 — 포함하기로 결정하면 일정을 다시 조정(기간 연장 또는 다른 항목 축소)해야 합니다.'},
+];
+
+const AT_ITEMS = [
+  {id:'AT-01', name:'Sampling', cond:'10Hz 장시간 수집', crit:'모든 sample timestamp/SEQ 연속, 허용 jitter 내 만족'},
+  {id:'AT-02', name:'BLE Stress', cond:'connection parameter 변화/간헐적 혼잡', crit:'acquisition period 불변, drop count 정확히 검출'},
+  {id:'AT-03', name:'Buffer', cond:'의도적 BLE block', crit:'ring buffer 정상 동작, overflow 시 silent loss 없음'},
+  {id:'AT-04', name:'Sensor Saturation', cond:'광량 과다/부족', crit:'포화/저신호 상태 검출 및 flag'},
+  {id:'AT-05', name:'Configuration', cond:'gain/integration/LED 설정 변경', crit:'변경 시점이 데이터에 정확히 기록'},
+  {id:'AT-06', name:'Power', cond:'논문 기준 모드 소비전력', crit:'baseline 확보 및 FW 변경별 회귀 비교'},
+  {id:'AT-07', name:'Thermal', cond:'최악 조건 장시간', crit:'41℃ 미만 유지, 보호 동작 정상 (0.7℃/min 반응속도 반영)'},
+  {id:'AT-08', name:'Runtime', cond:'연속 구동', crit:'논문 재현 5.5h 이상; 제품 목표는 별도'},
+  {id:'AT-09', name:'Reconnect', cond:'BLE 강제 disconnect/reconnect', crit:'데이터 gap 식별 가능, 시스템 hang 없음'},
+  {id:'AT-10', name:'Watchdog', cond:'I2C/BLE task fault 주입', crit:'자동 복구 및 fault log'},
+  {id:'AT-11', name:'Physiological Validation', cond:'운동(20s휴식+30s운동×2)/숨참기(60s+20s×2), N=4, 10Hz', crit:'논문 보고 재현 가능한 상태 의존 변화 확인'},
+  {id:'AT-12', name:'Overnight', cond:'EEG/EOG 동시 수면 측정', crit:'장시간 안정성 + clock alignment 확인'},
+];
+
+const RISKS = [
+  {id:'R0', text:'640nm LED 파트넘버 확인 완료 — XZM2CRK54WA-8 (해당 Task는 목록에서 제거, 결과만 기록)', def:true},
+  {id:'R1', text:'Threshold/Spectral 3개 모순(NREM·REM 방향, spectral 대역, sigma band 범위)은 저자 코드·공개자료 확인 전까지 펌웨어/서버 어느 쪽에도 구현하지 않는다.', def:false},
+  {id:'R2', text:'Overnight 모드 샘플링 레이트가 논문에 명시되어 있지 않아, 10Hz 고정 후 추가 변경 가능성을 열어둔다.', def:false},
+  {id:'R3', text:'OTA는 v1.1이 존재하지 않아 v1.0 범위로 복원되었다 — 기존에 버퍼로 남겨뒀던 10/8~10/9가 실작업일로 전환되어 일정 여유가 완전히 소진되었다. 추가 이슈 발생 시 완료일이 10/9 이후로 밀릴 수 있다.', def:false},
+  {id:'R4', text:'목표 완료일이 10/7(수) → 10/9(금)로 조정되었다 — 원 계획표의 공식 Due Date와 동일해진 것으로, 지연이 아니라 OTA 복원에 따른 재조정이다.', def:false},
+  {id:'R5', text:'본 일정은 토/일요일을 전면 제외한 영업일(평일) 기준으로 재계산되었다 — 9/11~10/9는 영업일 21일이며, 현재 23개 Task가 21영업일에 여유 없이 꽉 채워져 있다.', def:false},
+];
+
+const DAYPLAN = [
+ [1,'Week 1','9/11(금)','킥오프·인수 검증','US코드/펌웨어코드/APK 수령 최종 확인, 32MHz 크리스탈 부팅 검증 리뷰','완료 항목 재확인'],
+ [2,'Week 1','9/14(월)','클럭트리/타이머 재계산','32MHz 기준 클럭트리·타이머 프리스케일 재계산 완료','0-3'],
+ [3,'Week 1','9/15(화)','개발 범위 확정','논문 기반 개발 범위 확정 — 모순 3건 대응 방침, OTA 포함 범위 등 문서화','0-4'],
+ [4,'Week 1','9/16(수)','PWM 조정','PWM 주파수·듀티 조정(LED 광강도 설정)','1-1'],
+ [5,'Week 1','9/17(목)','LED 드라이버 캘리브레이션','LED 정전류 드라이버·채널별 광강도 캘리브레이션 (3파장 파트넘버 확정 반영)','1-2, 주간 리뷰'],
+ [6,'Week 2','9/18(금)','LED 통신주기 결정 (착수)','LED 통신(점등) 주기 — source multiplexing 시퀀스 설계 착수','1-3 착수'],
+ [7,'Week 2','9/21(월)','LED 통신주기 결정 (완료)','source multiplexing 시퀀스 확정','1-3 완료'],
+ [8,'Week 2','9/22(화)','dark period 확정','LED on/off settling time·dark period 확정 (0.7℃/min 초기발열속도 반영)','1-4'],
+ [9,'Week 2','9/23(수)','ADC 샘플링/게인 확정','Photodiode/ADC 샘플링 레이트·게인 확정, AS7341 채널별 개별 gain 구조 적용','2-1'],
+ [10,'Week 2','9/24(목)','LED-ADC 동기화','타임 멀티플렉싱 동기화 (source-detector timing) 구현','2-2, 주간 리뷰'],
+ [11,'Week 3','9/25(금)','Dark-frame subtraction','Ambient light 제거(dark-frame subtraction) 구현','2-3'],
+ [12,'Week 3','9/28(월)','모션/SQI + SNR 반영','모션/포화 검출 및 SQI 플래그 구현, rigid/flex SNR 벤치마크 임계치 반영','2-4'],
+ [13,'Week 3','9/29(화)','패킷 포맷 정의','데이터 패킷 포맷·버전 필드 정의(raw counts+상태바이트+seq+timestamp)','3-1'],
+ [14,'Week 3','9/30(수)','BLE 전송/재전송','BLE 전송 처리·손실패킷 검출/재전송 검증(32MHz 기준)','3-2'],
+ [15,'Week 3','10/1(목)','APK 연동','APK 소스 연동(FW-실시간 스트리밍·로깅)','3-3, 주간 리뷰'],
+ [16,'Week 4','10/2(금)','저장정책 + 동기화 검증','온보드 저장 정책(재검토 대상) 결정, EEG/EOG epoch(30s/5s) 동기화 요구사항 검증','3-4(P2) / 3-5'],
+ [17,'Week 4','10/5(월)','열 안전 최우선 구현','LED 듀티 기반 소비전류·발열 측정 + 41℃ 하드 보호 로직 구현','4-1 — 최우선 안전기능'],
+ [18,'Week 4','10/6(화)','OTA 검증 (복원)','OTA 펌웨어 업데이트·롤백 검증 — v1.1 없음, v1.0 범위로 복원','4-2'],
+ [19,'Week 4','10/7(수)','장시간 안정성 + 문서화','연속성(누수/드리프트) 안정성 시험(목표 ≥5.5h), 펌웨어 파라미터 확정 문서화','4-3 / 4-4'],
+ [20,'Week 5','10/8(목)','통합 회귀 테스트','AT-01~AT-12 v1.0 해당 항목 회귀 테스트','5-1'],
+ [21,'Week 5','10/9(금) ★목표일','FW v1.0 Freeze','fNIRS FW v1.0 build freeze·버전 태깅','5-2 — 목표 완료일 (원 계획 공식 Due Date)'],
+];
+
+
+const SPEC_ROWS = [
+ ['LED 파트넘버','640/680/950nm 파장만 기재','680nm = OIS-330 IE680(Opto International), 950nm = MTE9730CP(Marktech Optoelectronics), <b>640nm = XZM2CRK54WA-8 확인 완료</b>','LED 순방향전압·구동전류 스펙 3파장 모두 확보 → 드라이버 회로 정수 반영 가능'],
+ ['Photodetector','AS7341 언급만','AS7341(ams OSRAM)은 다채널 분광 센서로 여러 파장 신호를 동시에 분할 수집 가능(fig S1)','I2C 드라이버는 단일 게인이 아닌 채널별 개별 gain/integration time 관리 구조로 설계'],
+ ['Source-Detector 거리','30mm','논문 Fig.3C 표기는 3cm, Monte Carlo 시뮬레이션도 3cm 기준 — 30mm와 동일 단위, 정합 확인','광학 geometry 고정조건으로 그대로 유지'],
+ ['초기 발열 속도','언급 없음','초기 가열속도 약 0.7℃/min (첫 5분) 명시 — 41℃ 한계 대비 빠른 상승','온도 보호 로직의 반응(폴링) 주기를 이 속도 기준으로 설계 필요'],
+ ['Rigid vs Flex PCB SNR','없음','Rigid: 6.42/2.38/2.38dB(앉기/걷기/오르기), Flex: 12.72/7.44/9.5dB','모션별 SNR 벤치마크로 SQI 임계치 산정 및 AT 항목에 반영'],
+ ['Overnight 샘플링 레이트','10Hz로 서술','10Hz는 운동/숨참기 검증실험 조건으로 명시된 것이며, 실제 overnight 수면기록의 샘플링 레이트는 원문에 별도 명시 없음','1차 개발은 10Hz로 고정 진행하되 overnight 모드 스펙 변경 가능성은 리스크로 관리'],
+];
+
+const CONTRADICTIONS = [
+ ['① Threshold NREM/REM 판정 방향 모순','Results 본문: sigma power가 threshold보다 <b>높으면 NREM</b>, 낮으면 REM. Methods 본문: sigma power가 threshold보다 <b>높으면 REM</b>, 낮으면 NREM — 서로 반대로 기술.'],
+ ['② Spectral filtering 대역 모순','Methods 앞부분은 <b>0.01~0.5Hz</b> ultra-slow band만 분석한다고 서술하지만, 바로 이어 RS(~0.2~0.4Hz)/SONO(0.6~0.7Hz)/CC(0.8~1.2Hz)를 같은 파이프라인에서 분석 — 대역 범위를 벗어나는 모순.'],
+ ['③ [신규] Sigma band 주파수 범위 불일치','Results/Overview 본문 및 Fig.4F 캡션은 sigma-band power를 <b>10~15Hz</b>로 기술하지만, Materials and Methods의 threshold 모델 절은 <b>10~13Hz</b>로 다르게 기술.'],
+];
+
+/* ============================== BUSINESS-DAY CALENDAR ============================== */
+function isBizDay(d){ const w=d.getDay(); return w!==0 && w!==6; }
+function genBizDays(start,end){
+  const out=[]; let d=new Date(start);
+  while(d<=end){ if(isBizDay(d)) out.push(new Date(d)); d.setDate(d.getDate()+1); }
+  return out;
+}
+const CAL_START = new Date(2026,8,11);
+const CAL_END   = new Date(2026,9,9);
+const BIZDAYS = genBizDays(CAL_START, CAL_END); // 21 business days
+const N_DAYS = BIZDAYS.length;
+const TARGET_DATE = new Date(2026,9,9);
+const DUE_DATE = new Date(2026,9,9);
+const TARGET_IDX = BIZDAYS.findIndex(d=>d.getTime()===TARGET_DATE.getTime())+1;
+const DUE_IDX = BIZDAYS.findIndex(d=>d.getTime()===DUE_DATE.getTime())+1;
+const WD_KR=['일','월','화','수','목','금','토'];
+function dLabel(i){const d=BIZDAYS[i-1]; return (d.getMonth()+1)+'/'+d.getDate();}
+function wLabel(i){const d=BIZDAYS[i-1]; return WD_KR[d.getDay()];}
+
+function businessDaysUntil(target){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const t=new Date(target); t.setHours(0,0,0,0);
+  if (today.getTime()===t.getTime()) return 0;
+  const dir = today<t ? 1 : -1;
+  let cur=new Date(today), count=0;
+  while(cur.getTime()!==t.getTime()){
+    cur.setDate(cur.getDate()+dir);
+    if(isBizDay(cur)) count+=dir;
+  }
+  return count;
+}
+
+/* ============================== STATE (persisted) ============================== */
+const DEFAULT_STATE = {
+  taskProgress: Object.fromEntries(TASKS.map(t=>[t.id, t.def])),
+  atChecked: Object.fromEntries(AT_ITEMS.map(a=>[a.id, false])),
+  riskResolved: Object.fromEntries(RISKS.map(r=>[r.id, !!r.def])),
+  reviewDecided: Object.fromEntries([...REVIEW_DOWNGRADE, ...REVIEW_ADD].map(r=>[r.id, false])),
+  updatedAt: null,
+};
+let STATE = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+/* ============================== STORAGE SHIM ==============================
+   Inside a Claude.ai artifact, window.storage already exists and persists
+   per-conversation. Outside Claude (e.g. hosted on GitHub Pages / any static
+   server), window.storage does not exist, so we fall back to the browser's
+   own localStorage with the same async get/set shape. Either way the rest
+   of the app just calls window.storage.get/set and doesn't need to know
+   which backend is actually being used. */
+if (typeof window.storage === 'undefined') {
+  window.storage = {
+    get: async (key) => {
+      const v = localStorage.getItem('claude_artifact:' + key);
+      return v !== null ? {key, value: v, shared:false} : null;
+    },
+    set: async (key, value) => {
+      localStorage.setItem('claude_artifact:' + key, value);
+      return {key, value, shared:false};
+    },
+    delete: async (key) => {
+      localStorage.removeItem('claude_artifact:' + key);
+      return {key, deleted:true, shared:false};
+    },
+    list: async (prefix) => {
+      const keys = Object.keys(localStorage)
+        .filter(k => k.startsWith('claude_artifact:' + (prefix||'')))
+        .map(k => k.replace('claude_artifact:', ''));
+      return {keys, shared:false};
+    },
+  };
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get('fw_tracker_state', false);
+    if(res && res.value){
+      const saved = JSON.parse(res.value);
+      STATE.taskProgress = Object.assign({}, DEFAULT_STATE.taskProgress, saved.taskProgress||{});
+      STATE.atChecked    = Object.assign({}, DEFAULT_STATE.atChecked, saved.atChecked||{});
+      STATE.riskResolved = Object.assign({}, DEFAULT_STATE.riskResolved, saved.riskResolved||{});
+      STATE.reviewDecided = Object.assign({}, DEFAULT_STATE.reviewDecided, saved.reviewDecided||{});
+      STATE.updatedAt = saved.updatedAt || null;
+    }
+  }catch(e){ /* no saved state yet — use defaults */ }
+  renderAll();
+}
+async function saveState(){
+  STATE.updatedAt = new Date().toISOString();
+  try{
+    await window.storage.set('fw_tracker_state', JSON.stringify(STATE), false);
+  }catch(e){ console.error('storage save failed', e); }
+  renderAll();
+}
+
+/* ============================== HELPERS ============================== */
+function statusOf(pct){ if(pct>=100) return 'done'; if(pct>0) return 'mid'; return 'todo'; }
+function statusLabel(pct){ if(pct>=100) return '완료'; if(pct>0) return '진행중'; return '미착수'; }
+function groupAvg(gid){
+  const ts = TASKS.filter(t=>t.group===gid && !t.excl);
+  if(!ts.length) return 0;
+  return Math.round(ts.reduce((s,t)=>s+STATE.taskProgress[t.id],0)/ts.length);
+}
+function overallAvg(){
+  const ts = TASKS.filter(t=>!t.excl);
+  return Math.round(ts.reduce((s,t)=>s+STATE.taskProgress[t.id],0)/ts.length);
+}
+
+/* ============================== RENDER ============================== */
+const TABS = [
+  {id:'overview', label:'개요'},
+  {id:'analysis', label:'논문 재분석'},
+  {id:'tasks', label:'Task 체크리스트'},
+  {id:'gantt', label:'간트차트'},
+  {id:'dayplan', label:'Day Plan'},
+  {id:'at', label:'AT 체크리스트'},
+  {id:'risk', label:'리스크'},
+  {id:'review', label:'목록 재검토'},
+];
+function buildNav(){
+  const nav = document.getElementById('tabnav');
+  nav.innerHTML = TABS.map((t,i)=>`<button data-tab="${t.id}" class="${i===0?'active':''}">${t.label}</button>`).join('');
+  nav.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      nav.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+function renderHeaderStats(){
+  document.getElementById('statOverall').textContent = overallAvg()+'%';
+  const atDone = AT_ITEMS.filter(a=>STATE.atChecked[a.id]).length;
+  document.getElementById('statAT').textContent = atDone+' / '+AT_ITEMS.length;
+  const dd = businessDaysUntil(TARGET_DATE);
+  document.getElementById('statDday').textContent = dd===0 ? 'D-DAY' : (dd>0 ? ('D-'+dd) : ('D+'+Math.abs(dd)));
+  const u = STATE.updatedAt ? new Date(STATE.updatedAt) : null;
+  document.getElementById('statUpdated').textContent = u ? (u.getMonth()+1)+'/'+u.getDate()+' '+String(u.getHours()).padStart(2,'0')+':'+String(u.getMinutes()).padStart(2,'0') : '—';
+}
+
+function renderOverview(){
+  const el = document.getElementById('tab-overview');
+  const groupBars = GROUPS.map(g=>{
+    const pct = groupAvg(g.id);
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:3px;">
+        <span><b>[${g.id}] ${g.name}</b></span><span class="mono">${pct}%</span>
+      </div>
+      <div class="groupbar-wrap" style="width:100%;"><div class="groupbar-fill" style="width:${pct}%; background:${g.color};"></div></div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <h2>프로젝트 개요</h2>
+    <table class="metabox">
+      <tr><td class="k">기준 논문</td><td>Ban et al., "A soft wearable NIRS system for detecting brain water dynamics linked to glymphatic activity during sleep", Sci. Adv. 12, eaad2056 (2026)</td></tr>
+      <tr><td class="k">목표 완료일</td><td>2026-10-09 (금) — 원 계획표 공식 Due Date와 동일 · 영업일 21일 소요 (OTA v1.0 복원으로 기존 자체목표 10/7보다 2일 순연)</td></tr>
+      <tr><td class="k">담당</td><td>Wade</td></tr>
+      <tr><td class="k">버전</td><td>Rev.3 (인터랙티브 트래커, LED 640nm 파트넘버 확정 반영)</td></tr>
+    </table>
+
+    <div class="overview-grid">
+      <div class="card">
+        <h2 style="margin-top:0; border:none;">그룹별 진행률</h2>
+        ${groupBars}
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0; border:none;">사용 방법</h2>
+        <p class="hint" style="margin:0 0 8px 0;">
+        1. <b>Task 체크리스트</b> 탭에서 % 를 입력하거나 빠른 버튼(0/50/100)을 누르면 자동 저장됩니다.<br>
+        2. 100% 가 되면 완료 체크박스가 자동으로 체크되고, <b>간트차트</b> 탭의 막대가 같은 값으로 채워집니다.<br>
+        3. <b>AT 체크리스트</b>·<b>리스크</b> 탭의 체크박스도 같은 방식으로 즉시 저장됩니다.<br>
+        4. 이 브라우저(이 아티팩트)에 로컬로 저장되므로, 다시 열어도 마지막 상태가 유지됩니다.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function renderAnalysis(){
+  const el = document.getElementById('tab-analysis');
+  el.innerHTML = `
+    <h2>1. 논문 재분석 — 수정/추가 사항</h2>
+    <div class="card">
+      <table>
+        <tr><th style="width:13%">항목</th><th style="width:22%">1차 요약</th><th style="width:38%">재확인 결과</th><th>펌웨어 영향</th></tr>
+        ${SPEC_ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}
+      </table>
+    </div>
+    <h2>1-1. 논문 내부 모순 사항 (구현 보류 대상)</h2>
+    <p class="hint">아래 모순은 저자 코드·공개자료 확인 전까지 펌웨어·서버 어느 쪽에도 구현하지 않습니다.</p>
+    ${CONTRADICTIONS.map(c=>`<div class="contra"><b>${c[0]}</b><div style="margin-top:4px;">${c[1]}</div></div>`).join('')}
+  `;
+}
+
+function renderTasks(){
+  const el = document.getElementById('tab-tasks');
+  let rows = '';
+  GROUPS.forEach(g=>{
+    const gp = groupAvg(g.id);
+    rows += `<tr class="grouphead"><td colspan="6" style="border-left:4px solid ${g.color};">
+      [${g.id}] ${g.name}
+      <span class="groupbar-wrap"><span class="groupbar-fill" style="width:${gp}%; background:${g.color};"></span></span>
+      <span class="mono" style="font-size:11px; color:var(--dim); margin-left:6px;">${gp}%</span>
+    </td></tr>`;
+    TASKS.filter(t=>t.group===g.id).forEach(t=>{
+      const pct = STATE.taskProgress[t.id];
+      const st = t.excl ? 'excl' : statusOf(pct);
+      const stLabel = t.excl ? '일정 제외' : statusLabel(pct);
+      rows += `<tr data-task="${t.id}">
+        <td style="width:38%;">${t.name}${t.note?`<span class="note">· ${t.note}</span>`:''}</td>
+        <td class="center" style="width:7%;">${t.owner}</td>
+        <td class="center" style="width:8%;"><span class="prio ${t.prio}">${t.prio}</span></td>
+        <td style="width:18%;">
+          ${t.excl ? `<span class="note">이관됨</span>` : `
+          <div class="pctrow">
+            <input type="number" class="pctinput" min="0" max="100" step="5" value="${pct}" data-task-pct="${t.id}">
+            <span>%</span>
+            <button class="qbtn" data-quick="${t.id}:0">0</button>
+            <button class="qbtn" data-quick="${t.id}:50">50</button>
+            <button class="qbtn" data-quick="${t.id}:100">100</button>
+          </div>`}
+        </td>
+        <td class="center" style="width:9%;">${t.excl?'':`<input type="checkbox" data-task-done="${t.id}" ${pct>=100?'checked':''}>`}</td>
+        <td class="center" style="width:10%;"><span class="pill ${st}">${stLabel}</span></td>
+      </tr>`;
+    });
+  });
+  el.innerHTML = `
+    <h2>2. Task 체크리스트 (라이브 진행률)</h2>
+    <p class="hint">% 를 수정하면 자동 저장되고, 아래 <b>간트차트</b> 탭의 막대 채움 정도가 즉시 함께 바뀝니다. 100%가 되면 완료 체크박스가 자동으로 체크됩니다.</p>
+    <div class="card" style="padding:0; overflow-x:auto;">
+      <table>
+        <tr><th>Task</th><th class="center">담당</th><th class="center">우선순위</th><th>진행률</th><th class="center">완료</th><th class="center">상태</th></tr>
+        ${rows}
+      </table>
+    </div>
+  `;
+
+  el.querySelectorAll('[data-task-pct]').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      let v = Math.max(0, Math.min(100, Math.round(Number(e.target.value)/5)*5 || 0));
+      STATE.taskProgress[e.target.dataset.taskPct] = v;
+      saveState();
+    });
+  });
+  el.querySelectorAll('[data-quick]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const [id,val] = e.target.dataset.quick.split(':');
+      STATE.taskProgress[id] = Number(val);
+      saveState();
+    });
+  });
+  el.querySelectorAll('[data-task-done]').forEach(cb=>{
+    cb.addEventListener('change', e=>{
+      const id = e.target.dataset.taskDone;
+      STATE.taskProgress[id] = e.target.checked ? 100 : 0;
+      saveState();
+    });
+  });
+}
+
+function renderGantt(){
+  const el = document.getElementById('tab-gantt');
+  let colHeaderDate = '<th class="rowlabel">날짜</th>';
+  let colHeaderWd = '<th class="rowlabel">요일</th>';
+  for(let i=1;i<=N_DAYS;i++){
+    let cls='gh'; if(i===TARGET_IDX) cls+=' mark-target';
+    colHeaderDate += `<th class="${cls}">${dLabel(i)}</th>`;
+    colHeaderWd   += `<th class="${cls}">${wLabel(i)}</th>`;
+  }
+  let bodyRows = '';
+  TASKS.forEach(t=>{
+    let cells = '';
+    if(t.excl){
+      cells = `<td class="daycell" colspan="${N_DAYS}" style="text-align:left; padding-left:8px; color:#aaa; font-size:10.5px;">v1.1로 이관 — 일정에서 제외</td>`;
+    } else {
+      for(let i=1;i<=N_DAYS;i++){
+        if(i<t.start || i>t.end){
+          cells += `<td class="daycell"></td>`;
+        } else if(i===t.start){
+          const span = t.end - t.start + 1;
+          const pct = STATE.taskProgress[t.id];
+          const full = pct>=100 ? ' full' : '';
+          const textDark = pct<40;
+          cells += `<td class="daycell" colspan="${span}">
+            <div class="barwrap">
+              <div class="barfill${full}" style="width:${pct}%; background:${GCOLOR[t.group]};"></div>
+              <span class="barpct${textDark?' dark':''}">${pct}%</span>
+            </div>
+          </td>`;
+        }
+      }
+    }
+    bodyRows += `<tr><td class="rowlabel">[${t.group}] ${t.name}</td>${cells}</tr>`;
+  });
+
+  el.innerHTML = `
+    <h2>3. 시각적 간트차트 (영업일 기준, 진행률 실시간 반영)</h2>
+    <div class="legend">
+      ${GROUPS.map(g=>`<span><span class="sw" style="background:${g.color}"></span>${g.name}</span>`).join('')}
+    </div>
+    <p class="hint"><span style="color:var(--due); font-weight:700;">■ 목표/Due(10/9)</span> 열이 강조 표시됩니다. 주말은 축에서 완전히 제외되어 있습니다.
+    막대는 <b>Task 체크리스트</b>의 진행률과 항상 동일한 값을 보여줍니다.</p>
+    <div class="card ganttscroll">
+      <table class="gantt">
+        <thead><tr>${colHeaderDate}</tr><tr>${colHeaderWd}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderDayplan(){
+  const el = document.getElementById('tab-dayplan');
+  el.innerHTML = `
+    <h2>4. Week/Day 기준 상세 실행계획 (영업일 기준)</h2>
+    <p class="hint">주말(토/일)은 일정 계산에서 완전히 제외했습니다. 9/11(금)부터 10/9(금, 원 계획표 공식 Due Date)까지 영업일 21일이며, OTA가 v1.0 범위로 복원되면서 버퍼 없이 21일이 모두 실작업일로 채워졌습니다.</p>
+    <div class="card" style="padding:0; overflow-x:auto;">
+      <table>
+        <tr><th class="center" style="width:6%">영업일</th><th class="center" style="width:7%">Week</th><th class="center" style="width:11%">Date</th><th style="width:16%">핵심 작업</th><th>세부 내용</th><th style="width:18%">비고</th></tr>
+        ${DAYPLAN.map(d=>`<tr ${d[0]>TARGET_IDX?'style="color:#999;"':''}>
+          <td class="center mono">D${d[0]}</td><td class="center"><b>${d[1]}</b></td><td class="center">${d[2]}</td>
+          <td><b>${d[3]}</b></td><td>${d[4]}</td><td class="note" style="display:block;">${d[5]}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+  `;
+}
+
+function renderAT(){
+  const el = document.getElementById('tab-at');
+  el.innerHTML = `
+    <h2>6. Acceptance Test 체크리스트 (v1.0 해당 항목)</h2>
+    <p class="hint">체크하면 자동 저장되고, 상단 헤더의 "AT 통과" 카운트가 즉시 갱신됩니다.</p>
+    <div class="card">
+      ${AT_ITEMS.map(a=>`
+        <div class="at-row">
+          <input type="checkbox" data-at="${a.id}" ${STATE.atChecked[a.id]?'checked':''}>
+          <span class="at-id mono">${a.id}</span>
+          <span class="at-name">${a.name}</span>
+          <span class="at-cond">${a.cond} → <b>${a.crit}</b></span>
+        </div>`).join('')}
+    </div>
+  `;
+  el.querySelectorAll('[data-at]').forEach(cb=>{
+    cb.addEventListener('change', e=>{
+      STATE.atChecked[e.target.dataset.at] = e.target.checked;
+      saveState();
+    });
+  });
+}
+
+function renderRisk(){
+  const el = document.getElementById('tab-risk');
+  el.innerHTML = `
+    <h2>5. 리스크 및 확인 필요 사항</h2>
+    <p class="hint">해결/확인된 항목은 체크하면 자동 저장되고 흐리게 표시됩니다.</p>
+    <div class="card">
+      ${RISKS.map(r=>`
+        <div class="riskitem ${STATE.riskResolved[r.id]?'resolved':''}" data-risk-row="${r.id}">
+          <input type="checkbox" data-risk="${r.id}" ${STATE.riskResolved[r.id]?'checked':''}>
+          <span class="risktext">${r.text}</span>
+        </div>`).join('')}
+    </div>
+  `;
+  el.querySelectorAll('[data-risk]').forEach(cb=>{
+    cb.addEventListener('change', e=>{
+      const id = e.target.dataset.risk;
+      STATE.riskResolved[id] = e.target.checked;
+      document.querySelector(`[data-risk-row="${id}"]`).classList.toggle('resolved', e.target.checked);
+      saveState();
+    });
+  });
+}
+
+function renderReview(){
+  const el = document.getElementById('tab-review');
+  el.innerHTML = `
+    <h2>7. 목록 재검토 — 불필요 후보 / 추가 권장</h2>
+    <p class="hint">처음 전달된 간트차트 21개 항목 + 추가된 항목을 다시 검토한 결과입니다. 결정 여부를 체크하면 저장됩니다 (Task 목록 자체는 자동으로 바뀌지 않으며, 결정 후 별도 반영을 요청해 주세요).</p>
+
+    <h3 style="font-size:13px; margin:14px 0 6px 0;">A. 재고려 후보 — 원 목록에 있으나 우선순위 재검토 대상</h3>
+    <div class="card">
+      ${REVIEW_DOWNGRADE.map(r=>`
+        <div class="riskitem" data-review-row="${r.id}">
+          <input type="checkbox" data-review="${r.id}" ${STATE.reviewDecided[r.id]?'checked':''}>
+          <div>
+            <b>${r.title}</b>
+            <div style="margin-top:3px; font-size:12.3px; color:var(--dim);">${r.body}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <h3 style="font-size:13px; margin:16px 0 6px 0;">B. 추가 권장 — 실제 개발 목표를 위해 필요하나 현재 목록에 없음</h3>
+    <div class="card">
+      ${REVIEW_ADD.map(r=>`
+        <div class="riskitem" data-review-row="${r.id}">
+          <input type="checkbox" data-review="${r.id}" ${STATE.reviewDecided[r.id]?'checked':''}>
+          <div>
+            <b>${r.title}</b>
+            <div style="margin-top:3px; font-size:12.3px; color:var(--dim);">${r.body}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <h3 style="font-size:13px; margin:16px 0 6px 0;">검토 결과 요약</h3>
+    <p class="hint" style="margin:0;">
+    나머지 19개 원 목록 항목(0-1~0-3, 1-1~1-4, 2-1~2-4, 3-1~3-3·3-5, 4-1·4-3·4-4, 5-1·5-2)은
+    논문의 3파장 LED·AS7341·BLE·41℃ 열안전·SNR 스펙과 직접 대응되어 <b>불필요한 항목으로 보이지 않습니다.</b>
+    </p>
+  `;
+  el.querySelectorAll('[data-review]').forEach(cb=>{
+    cb.addEventListener('change', e=>{
+      const id = e.target.dataset.review;
+      STATE.reviewDecided[id] = e.target.checked;
+      document.querySelector(`[data-review-row="${id}"]`).classList.toggle('resolved', e.target.checked);
+      saveState();
+    });
+  });
+}
+
+function renderAll(){
+  renderHeaderStats();
+  renderOverview();
+  renderAnalysis();
+  renderTasks();
+  renderGantt();
+  renderDayplan();
+  renderAT();
+  renderRisk();
+  renderReview();
+}
+
+buildNav();
+loadState();
+</script>
+</body>
+</html>
