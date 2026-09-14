@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>fNIRS FW v1.0 개발 트래커</title>
+<title>fNIRS FW v1.2 개발 트래커</title>
 <style>
 :root{
   --bg:#F5F6F8; --surface:#FFFFFF; --border:#E3E6EA;
@@ -151,7 +151,7 @@ footer{text-align:center; color:var(--dim); font-size:11px; padding:14px; }
   <div class="headtop">
     <div>
       <h1>fNIRS Wearable FW v1.0 개발 트래커</h1>
-      <div class="subtitle">Ban et al., Sci. Adv. 12, eaad2056 (2026) 기반 · 담당 Wade · 목표 완료일 2026-10-09(금) = 원 계획표 공식 Due Date (OTA v1.0 포함으로 재조정)</div>
+      <div class="subtitle">Ban et al., Sci. Adv. 12, eaad2056 (2026) 기반 · 담당 Wade · 목표 완료일 2026-10-15(목) (추석·개천절 대체휴일·한글날 반영 재조정)</div>
     </div>
     <div class="stats">
       <div class="stat"><div class="num" id="statOverall">–%</div><div class="lbl">FW 개발 진행률</div></div>
@@ -245,33 +245,34 @@ const RISKS = [
   {id:'R0', text:'640nm LED 파트넘버 확인 완료 — XZM2CRK54WA-8 (해당 Task는 목록에서 제거, 결과만 기록)', def:true},
   {id:'R1', text:'Threshold/Spectral 3개 모순(NREM·REM 방향, spectral 대역, sigma band 범위)은 저자 코드·공개자료 확인 전까지 펌웨어/서버 어느 쪽에도 구현하지 않는다.', def:false},
   {id:'R2', text:'Overnight 모드 샘플링 레이트가 논문에 명시되어 있지 않아, 10Hz 고정 후 추가 변경 가능성을 열어둔다.', def:false},
-  {id:'R3', text:'OTA는 v1.1이 존재하지 않아 v1.0 범위로 복원되었다 — 기존에 버퍼로 남겨뒀던 10/8~10/9가 실작업일로 전환되어 일정 여유가 완전히 소진되었다. 추가 이슈 발생 시 완료일이 10/9 이후로 밀릴 수 있다.', def:false},
-  {id:'R4', text:'목표 완료일이 10/7(수) → 10/9(금)로 조정되었다 — 원 계획표의 공식 Due Date와 동일해진 것으로, 지연이 아니라 OTA 복원에 따른 재조정이다.', def:false},
-  {id:'R5', text:'본 일정은 토/일요일을 전면 제외한 영업일(평일) 기준으로 재계산되었다 — 9/11~10/9는 영업일 21일이며, 현재 23개 Task가 21영업일에 여유 없이 꽉 채워져 있다.', def:false},
+  {id:'R3', text:'OTA는 v1.1이 존재하지 않아 v1.0 범위로 복원되었다 — 기존에 버퍼로 남겨뒀던 마지막 이틀이 실작업일로 전환되어 일정 여유가 완전히 소진되었다. 추가 이슈 발생 시 완료일이 더 밀릴 수 있다.', def:false},
+  {id:'R4', text:'추석 연휴(9/24~9/25), 개천절 대체휴일(10/5), 한글날(10/9)까지 총 4일을 실제 휴무로 반영하면서, 목표 완료일이 10/9 → 10/15(목)로 순연되었다 — 이는 지연이 아니라 실제 근무일 21일을 그대로 유지하기 위한 재조정이다.', def:false},
+  {id:'R5', text:'본 일정은 토/일요일과 확인된 공휴일(추석, 개천절 대체휴일, 한글날)을 전면 제외한 순수 근무일 기준으로 재계산되었다 — 9/11~10/15가 근무일 21일이며, 23개 Task가 여유 없이 꽉 채워져 있다.', def:false},
+  {id:'R6', text:'10/9(한글날)도 휴무로 반영하기로 확정했다 (2026-09-15 확인). Day18 이후 일정이 하루씩 순연되어 최종 완료일은 10/15(목)이다.', def:true},
 ];
 
 const DAYPLAN = [
  [1,'Week 1','9/11(금)','킥오프·인수 검증','US코드/펌웨어코드/APK 수령 최종 확인, 32MHz 크리스탈 부팅 검증 리뷰','완료 항목 재확인'],
- [2,'Week 1','9/14(월)','클럭트리/타이머 재계산','32MHz 기준 클럭트리·타이머 프리스케일 재계산 완료','0-3'],
- [3,'Week 1','9/15(화)','개발 범위 확정','논문 기반 개발 범위 확정 — 모순 3건 대응 방침, OTA 포함 범위 등 문서화','0-4'],
- [4,'Week 1','9/16(수)','PWM 조정','PWM 주파수·듀티 조정(LED 광강도 설정)','1-1'],
- [5,'Week 1','9/17(목)','LED 드라이버 캘리브레이션','LED 정전류 드라이버·채널별 광강도 캘리브레이션 (3파장 파트넘버 확정 반영)','1-2, 주간 리뷰'],
+ [2,'Week 2','9/14(월)','클럭트리/타이머 재계산','32MHz 기준 클럭트리·타이머 프리스케일 재계산 완료','0-3'],
+ [3,'Week 2','9/15(화)','개발 범위 확정','논문 기반 개발 범위 확정 — 모순 3건 대응 방침, OTA 포함 범위 등 문서화','0-4'],
+ [4,'Week 2','9/16(수)','PWM 조정','PWM 주파수·듀티 조정(LED 광강도 설정)','1-1'],
+ [5,'Week 2','9/17(목)','LED 드라이버 캘리브레이션','LED 정전류 드라이버·채널별 광강도 캘리브레이션 (3파장 파트넘버 확정 반영)','1-2, 주간 리뷰'],
  [6,'Week 2','9/18(금)','LED 통신주기 결정 (착수)','LED 통신(점등) 주기 — source multiplexing 시퀀스 설계 착수','1-3 착수'],
- [7,'Week 2','9/21(월)','LED 통신주기 결정 (완료)','source multiplexing 시퀀스 확정','1-3 완료'],
- [8,'Week 2','9/22(화)','dark period 확정','LED on/off settling time·dark period 확정 (0.7℃/min 초기발열속도 반영)','1-4'],
- [9,'Week 2','9/23(수)','ADC 샘플링/게인 확정','Photodiode/ADC 샘플링 레이트·게인 확정, AS7341 채널별 개별 gain 구조 적용','2-1'],
- [10,'Week 2','9/24(목)','LED-ADC 동기화','타임 멀티플렉싱 동기화 (source-detector timing) 구현','2-2, 주간 리뷰'],
- [11,'Week 3','9/25(금)','Dark-frame subtraction','Ambient light 제거(dark-frame subtraction) 구현','2-3'],
- [12,'Week 3','9/28(월)','모션/SQI + SNR 반영','모션/포화 검출 및 SQI 플래그 구현, rigid/flex SNR 벤치마크 임계치 반영','2-4'],
- [13,'Week 3','9/29(화)','패킷 포맷 정의','데이터 패킷 포맷·버전 필드 정의(raw counts+상태바이트+seq+timestamp)','3-1'],
- [14,'Week 3','9/30(수)','BLE 전송/재전송','BLE 전송 처리·손실패킷 검출/재전송 검증(32MHz 기준)','3-2'],
- [15,'Week 3','10/1(목)','APK 연동','APK 소스 연동(FW-실시간 스트리밍·로깅)','3-3, 주간 리뷰'],
- [16,'Week 4','10/2(금)','저장정책 + 동기화 검증','온보드 저장 정책(재검토 대상) 결정, EEG/EOG epoch(30s/5s) 동기화 요구사항 검증','3-4(P2) / 3-5'],
- [17,'Week 4','10/5(월)','열 안전 최우선 구현','LED 듀티 기반 소비전류·발열 측정 + 41℃ 하드 보호 로직 구현','4-1 — 최우선 안전기능'],
- [18,'Week 4','10/6(화)','OTA 검증 (복원)','OTA 펌웨어 업데이트·롤백 검증 — v1.1 없음, v1.0 범위로 복원','4-2'],
- [19,'Week 4','10/7(수)','장시간 안정성 + 문서화','연속성(누수/드리프트) 안정성 시험(목표 ≥5.5h), 펌웨어 파라미터 확정 문서화','4-3 / 4-4'],
- [20,'Week 5','10/8(목)','통합 회귀 테스트','AT-01~AT-12 v1.0 해당 항목 회귀 테스트','5-1'],
- [21,'Week 5','10/9(금) ★목표일','FW v1.0 Freeze','fNIRS FW v1.0 build freeze·버전 태깅','5-2 — 목표 완료일 (원 계획 공식 Due Date)'],
+ [7,'Week 3','9/21(월)','LED 통신주기 결정 (완료)','source multiplexing 시퀀스 확정','1-3 완료'],
+ [8,'Week 3','9/22(화)','dark period 확정','LED on/off settling time·dark period 확정 (0.7℃/min 초기발열속도 반영)','1-4'],
+ [9,'Week 3','9/23(수)','ADC 샘플링/게인 확정','Photodiode/ADC 샘플링 레이트·게인 확정, AS7341 채널별 개별 gain 구조 적용','2-1'],
+ [10,'Week 4','9/28(월)','LED-ADC 동기화','추석 연휴(9/24~25) 이후 재개 — 타임 멀티플렉싱 동기화 (source-detector timing) 구현','2-2, 주간 리뷰'],
+ [11,'Week 4','9/29(화)','Dark-frame subtraction','Ambient light 제거(dark-frame subtraction) 구현','2-3'],
+ [12,'Week 4','9/30(수)','모션/SQI + SNR 반영','모션/포화 검출 및 SQI 플래그 구현, rigid/flex SNR 벤치마크 임계치 반영','2-4'],
+ [13,'Week 4','10/1(목)','패킷 포맷 정의','데이터 패킷 포맷·버전 필드 정의(raw counts+상태바이트+seq+timestamp)','3-1'],
+ [14,'Week 4','10/2(금)','BLE 전송/재전송','BLE 전송 처리·손실패킷 검출/재전송 검증(32MHz 기준)','3-2'],
+ [15,'Week 5','10/6(화)','APK 연동','개천절 대체휴일(10/5) 이후 재개 — APK 소스 연동(FW-실시간 스트리밍·로깅)','3-3, 주간 리뷰'],
+ [16,'Week 5','10/7(수)','저장정책 + 동기화 검증','온보드 저장 정책(재검토 대상) 결정, EEG/EOG epoch(30s/5s) 동기화 요구사항 검증','3-4(P2) / 3-5'],
+ [17,'Week 5','10/8(목)','열 안전 최우선 구현','LED 듀티 기반 소비전류·발열 측정 + 41℃ 하드 보호 로직 구현','4-1 — 최우선 안전기능'],
+ [18,'Week 6','10/12(월)','OTA 검증 (복원)','OTA 펌웨어 업데이트·롤백 검증 — v1.1 없음, v1.0 범위로 복원','4-2 · 한글날(10/9) 휴무 반영으로 재개'],
+ [19,'Week 6','10/13(화)','장시간 안정성 + 문서화','연속성(누수/드리프트) 안정성 시험(목표 ≥5.5h), 펌웨어 파라미터 확정 문서화','4-3 / 4-4'],
+ [20,'Week 6','10/14(수)','통합 회귀 테스트','AT-01~AT-12 v1.0 해당 항목 회귀 테스트','5-1'],
+ [21,'Week 6','10/15(목) ★목표일','FW v1.0 Freeze','fNIRS FW v1.0 build freeze·버전 태깅','5-2 — 목표 완료일 (한글날 포함 휴일 반영 최종 재조정)'],
 ];
 
 // Per-day expand content: tips / verify / caution / self-check items.
@@ -488,20 +489,28 @@ const CONTRADICTIONS = [
 ];
 
 /* ============================== BUSINESS-DAY CALENDAR ============================== */
-function isBizDay(d){ const w=d.getDay(); return w!==0 && w!==6; }
+// Korean public holidays that fall inside the project window and must be excluded
+// from the working-day count (confirmed with the team on 2026-09-15):
+//  - 9/24, 9/25: 추석 연휴 (Chuseok) — 9/26 is already a Saturday, so no extra exclusion needed there
+//  - 10/5: 개천절 대체공휴일 (Gaecheonjeol substitute holiday, since 10/3 fell on a Saturday)
+//  - 10/9: 한글날 (Hangul Day, fixed annual public holiday) — confirmed with the team on 2026-09-15
+//    to also be treated as a day off, even though it coincided with this project's own target date.
+const HOLIDAYS = new Set(['2026-09-24', '2026-09-25', '2026-10-05', '2026-10-09']);
+function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function isBizDay(d){ const w=d.getDay(); return w!==0 && w!==6 && !HOLIDAYS.has(dateKey(d)); }
 function genBizDays(start,end){
   const out=[]; let d=new Date(start);
   while(d<=end){ if(isBizDay(d)) out.push(new Date(d)); d.setDate(d.getDate()+1); }
   return out;
 }
 const CAL_START = new Date(2026,8,11);
-const CAL_END   = new Date(2026,9,9);
-const BIZDAYS = genBizDays(CAL_START, CAL_END); // 21 business days
+const CAL_SEARCH_END = new Date(2026,10,20); // generous upper bound; we only keep the first 21 valid business days
+const BIZDAYS = genBizDays(CAL_START, CAL_SEARCH_END).slice(0,21); // 21 *working* business days (weekends + holidays excluded)
 const N_DAYS = BIZDAYS.length;
-const TARGET_DATE = new Date(2026,9,9);
-const DUE_DATE = new Date(2026,9,9);
-const TARGET_IDX = BIZDAYS.findIndex(d=>d.getTime()===TARGET_DATE.getTime())+1;
-const DUE_IDX = BIZDAYS.findIndex(d=>d.getTime()===DUE_DATE.getTime())+1;
+const TARGET_DATE = BIZDAYS[N_DAYS-1]; // last working day in the sequence = new target/Due date
+const DUE_DATE = TARGET_DATE;
+const TARGET_IDX = N_DAYS;
+const DUE_IDX = N_DAYS;
 const WD_KR=['일','월','화','수','목','금','토'];
 function dLabel(i){const d=BIZDAYS[i-1]; return (d.getMonth()+1)+'/'+d.getDate();}
 function wLabel(i){const d=BIZDAYS[i-1]; return WD_KR[d.getDay()];}
@@ -647,7 +656,7 @@ function renderOverview(){
     <h2>프로젝트 개요</h2>
     <table class="metabox">
       <tr><td class="k">기준 논문</td><td>Ban et al., "A soft wearable NIRS system for detecting brain water dynamics linked to glymphatic activity during sleep", Sci. Adv. 12, eaad2056 (2026)</td></tr>
-      <tr><td class="k">목표 완료일</td><td>2026-10-09 (금) — 원 계획표 공식 Due Date와 동일 · 영업일 21일 소요 (OTA v1.0 복원으로 기존 자체목표 10/7보다 2일 순연)</td></tr>
+      <tr><td class="k">목표 완료일</td><td>2026-10-15 (목) — 추석 연휴(9/24~25), 개천절 대체휴일(10/5), 한글날(10/9) 총 4일을 실제 휴무로 반영해 근무일 21일을 유지하면서 10/9였던 목표가 10/15로 순연되었습니다.</td></tr>
       <tr><td class="k">담당</td><td>Wade</td></tr>
       <tr><td class="k">버전</td><td>Rev.3 (인터랙티브 트래커, LED 640nm 파트넘버 확정 반영)</td></tr>
     </table>
@@ -793,7 +802,7 @@ function renderGantt(){
     <div class="legend">
       ${GROUPS.map(g=>`<span><span class="sw" style="background:${g.color}"></span>${g.name}</span>`).join('')}
     </div>
-    <p class="hint"><span style="color:var(--due); font-weight:700;">■ 목표/Due(10/9)</span> 열이 강조 표시됩니다. 주말은 축에서 완전히 제외되어 있습니다.
+    <p class="hint"><span style="color:var(--due); font-weight:700;">■ 목표/Due(10/15)</span> 열이 강조 표시됩니다. 주말과 공휴일(추석 9/24~25, 개천절 대체휴일 10/5, 한글날 10/9)이 축에서 완전히 제외되어 있습니다.
     막대는 <b>Task 체크리스트</b>의 진행률과 항상 동일한 값을 보여줍니다.</p>
     <div class="card ganttscroll">
       <table class="gantt">
@@ -851,7 +860,7 @@ function renderDayplan(){
 
   el.innerHTML = `
     <h2>4. Week/Day 기준 상세 실행계획 (영업일 기준)</h2>
-    <p class="hint">주말(토/일)은 일정 계산에서 완전히 제외했습니다. 9/11(금)부터 10/9(금, 원 계획표 공식 Due Date)까지 영업일 21일이며, OTA가 v1.0 범위로 복원되면서 버퍼 없이 21일이 모두 실작업일로 채워졌습니다.</p>
+    <p class="hint">주말(토/일)과 공휴일(추석 연휴 9/24~9/25, 개천절 대체휴일 10/5, 한글날 10/9)을 모두 제외했습니다. 9/11(금)부터 순수 근무일 21일을 채우면 목표 완료일이 10/9 → <b>10/15(목)</b>로 순연됩니다.</p>
     <p class="hint">행을 클릭하면 그날의 개발 팁·검증 사항·주의 사항과 셀프 체크리스트가 펼쳐집니다. 체크는 자동 저장됩니다.</p>
     <div class="card" style="padding:0; overflow-x:auto;">
       <table>
@@ -990,4 +999,3 @@ loadState();
 </script>
 </body>
 </html>
-
