@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>fNIRS FW v1.2 개발 트래커</title>
+<title>fNIRS 양산형 FW 개발 트래커 (Zephyr/S1·S2 기반) v1.3</title>
 <style>
 :root{
   --bg:#F5F6F8; --surface:#FFFFFF; --border:#E3E6EA;
@@ -115,6 +115,11 @@ table.gantt td.daycell{height:28px; border-bottom:1px solid #F0F0F2;}
 @media (max-width:900px){.overview-grid{grid-template-columns:1fr;}}
 .contra{border-left:4px solid #C62828; background:#FFF6F6; padding:8px 12px; border-radius:0 6px 6px 0; margin-bottom:8px; font-size:12.5px;}
 .contra b{color:#C62828;}
+.priority-banner{border-left:4px solid var(--due); background:#FDF2F4; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:16px; font-size:13px; line-height:1.6;}
+.priority-banner b{color:var(--due);}
+.arch-pre{background:#12161C; color:#D8E0E8; border-radius:8px; padding:14px 18px; font-size:11.5px; line-height:1.55; overflow-x:auto; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+.arch-note{font-size:12px; color:var(--dim); margin:6px 0 0 0;}
+.scope-note{background:#F2F0FA; border:1px solid #DCD6F0; border-radius:8px; padding:10px 14px; font-size:12.3px; margin:8px 0 16px 0;}
 .resetbar{margin-top:26px; text-align:right;}
 .resetbtn{background:none; border:1px solid var(--border); color:var(--dim); border-radius:6px; padding:6px 12px; font-size:11.5px; cursor:pointer;}
 .resetbtn:hover{border-color:#c66; color:#c66;}
@@ -150,13 +155,13 @@ footer{text-align:center; color:var(--dim); font-size:11px; padding:14px; }
 <header>
   <div class="headtop">
     <div>
-      <h1>fNIRS Wearable FW v1.0 개발 트래커</h1>
-      <div class="subtitle">Ban et al., Sci. Adv. 12, eaad2056 (2026) 기반 · 담당 Wade · 목표 완료일 2026-10-15(목) (추석·개천절 대체휴일·한글날 반영 재조정)</div>
+      <h1>fNIRS 양산형 FW 개발 트래커</h1>
+      <div class="subtitle">양산형 아키텍처 결정 반영 (2026-09-14) · Zephyr(NCS) + S1구조/S2프로토콜 계승 · 담당 Wade · Rev0~3 재산정 지점 2026-10-12(월)</div>
     </div>
     <div class="stats">
-      <div class="stat"><div class="num" id="statOverall">–%</div><div class="lbl">FW 개발 진행률</div></div>
-      <div class="stat"><div class="num" id="statAT">–</div><div class="lbl">AT 통과 (v1.0)</div></div>
-      <div class="stat"><div class="num" id="statDday">–</div><div class="lbl">목표일까지 영업일</div></div>
+      <div class="stat"><div class="num" id="statOverall">–%</div><div class="lbl">Rev0~3 진행률</div></div>
+      <div class="stat"><div class="num" id="statAT">–</div><div class="lbl">AT 통과</div></div>
+      <div class="stat"><div class="num" id="statDday">–</div><div class="lbl">재산정일까지 영업일</div></div>
       <div class="stat"><div class="num" id="statUpdated">–</div><div class="lbl">마지막 업데이트</div></div>
     </div>
   </div>
@@ -165,13 +170,13 @@ footer{text-align:center; color:var(--dim); font-size:11px; padding:14px; }
 
 <main>
   <section id="tab-overview"></section>
+  <section id="tab-arch"></section>
   <section id="tab-analysis"></section>
   <section id="tab-tasks"></section>
   <section id="tab-gantt"></section>
   <section id="tab-dayplan"></section>
   <section id="tab-at"></section>
   <section id="tab-risk"></section>
-  <section id="tab-review"></section>
 </main>
 
 <footer>진행 상황을 입력하면 로컬에 자동 저장되며, 체크리스트·그룹 진행률·간트차트가 같은 데이터를 기준으로 함께 갱신됩니다.</footer>
@@ -179,12 +184,11 @@ footer{text-align:center; color:var(--dim); font-size:11px; padding:14px; }
 <script>
 /* ============================== DATA ============================== */
 const GROUPS = [
-  {id:'0', name:'Baseline & Handover', color:'#6B5B95'},
-  {id:'1', name:'LED Drive & PWM', color:'#C97B3D'},
-  {id:'2', name:'Acquisition & Sync', color:'#4C8C6B'},
-  {id:'3', name:'Data Path & App', color:'#3C7A9E'},
-  {id:'4', name:'Power & Reliability', color:'#AD8B12'},
-  {id:'5', name:'FW Freeze / Release', color:'#A23E58'},
+  {id:'R0', name:'Rev0 — 구조/프로토콜 이식 + Zephyr 스캐폴드', color:'#6B5B95'},
+  {id:'R1', name:'Rev1 — Optical Acquisition (최우선)', color:'#C0392B'},
+  {id:'R2', name:'Rev2 — BLE Streaming', color:'#3C7A9E'},
+  {id:'R3', name:'Rev3 — Reliability', color:'#4C8C6B'},
+  {id:'R47', name:'Rev4~7 — 신호검증·오버나이트·전력최적화·양산화 (미정)', color:'#999999'},
 ];
 const GCOLOR = Object.fromEntries(GROUPS.map(g=>[g.id,g.color]));
 const GNAME  = Object.fromEntries(GROUPS.map(g=>[g.id,g.name]));
@@ -192,283 +196,234 @@ const GNAME  = Object.fromEntries(GROUPS.map(g=>[g.id,g.name]));
 // start/end are business-day indices (1..21), weekends do not exist on this axis.
 // excl:true means out of v1.0 schedule (not drawn on gantt, not counted in overall %)
 const TASKS = [
-  {id:'0-1', group:'0', name:'US 코드 인수 검토·펌웨어 코드/APK 소스코드 수령정리', owner:'Wade', prio:'P0', start:1, end:1, note:'완료 확인', def:100},
-  {id:'0-2', group:'0', name:'32MHz crystal 교체 후 펌웨어 포팅·부팅 검증', owner:'Wade', prio:'P0', start:1, end:1, note:'완료 확인', def:100},
-  {id:'0-3', group:'0', name:'클럭 트리/타이머 프리스케일 32MHz 기준 재계산 검증', owner:'Wade', prio:'P0', start:2, end:2, note:'', def:30},
-  {id:'0-4', group:'0', name:'논문 기반 개발 범위 확정', owner:'Wade', prio:'P0', start:3, end:3, note:'모순 3건 대응 방침·OTA 포함 여부 등 범위 결정 문서화', def:0},
-  {id:'1-1', group:'1', name:'PWM 주파수·듀티 조정 (LED 광강도 설정)', owner:'Wade', prio:'P0', start:4, end:4, note:'', def:10},
-  {id:'1-2', group:'1', name:'LED 정전류 드라이버·채널별 광강도 캘리브레이션', owner:'Wade', prio:'P0', start:5, end:5, note:'640/680/950nm 파트넘버 기준 순방향전압·전류 반영', def:0},
-  {id:'1-3', group:'1', name:'LED 통신(점등) 주기 결정 — source multiplexing 시퀀스', owner:'Wade', prio:'P0', start:6, end:7, note:'', def:0},
-  {id:'1-4', group:'1', name:'LED on/off settling time·dark period 확정', owner:'Wade', prio:'P0', start:8, end:8, note:'0.7℃/min 초기발열속도 반영', def:0},
-  {id:'2-1', group:'2', name:'Photodiode/ADC 샘플링 레이트·게인 확정', owner:'Wade', prio:'P0', start:9, end:9, note:'AS7341 채널별 개별 gain 구조', def:0},
-  {id:'2-2', group:'2', name:'LED-ADC 타임 멀티플렉싱 동기화 (source-detector timing)', owner:'Wade', prio:'P0', start:10, end:10, note:'', def:0},
-  {id:'2-3', group:'2', name:'Ambient light 제거 (dark-frame subtraction) 구현', owner:'Wade', prio:'P0', start:11, end:11, note:'', def:0},
-  {id:'2-4', group:'2', name:'모션/포화 검출 및 SQI(신호품질지표) 플래그', owner:'Wade', prio:'P1', start:12, end:12, note:'[신규] rigid/flex SNR 벤치마크 반영', def:0},
-  {id:'3-1', group:'3', name:'데이터 패킷 포맷·버전 필드 정의 (raw counts+상태바이트)', owner:'Wade', prio:'P0', start:13, end:13, note:'seq number·timestamp 포함', def:0},
-  {id:'3-2', group:'3', name:'BLE 전송 처리·손실패킷 검출/재전송 검증 (32MHz 기준)', owner:'Wade', prio:'P0', start:14, end:14, note:'', def:0},
-  {id:'3-3', group:'3', name:'APK 소스 연동 (펌웨어-실시간 스트리밍·로깅)', owner:'Wade', prio:'P1', start:15, end:15, note:'', def:0},
-  {id:'3-4', group:'3', name:'온보드 저장 vs 실시간 전송 정책·타임스탬프 확정', owner:'Wade', prio:'P2', start:16, end:16, note:'△ 재검토 후보 — 논문은 실시간 스트리밍만 사용, "목록 재검토" 탭 참고', def:0},
-  {id:'3-5', group:'3', name:'[신규] EEG/EOG epoch(30s/5s) 동기화 요구사항 검증', owner:'Wade', prio:'P1', start:16, end:16, note:'타임스탬프 정합성', def:0},
-  {id:'4-1', group:'4', name:'LED 듀티 기반 소비전류·발열 측정 및 41℃ 하드 보호 로직', owner:'Wade', prio:'P0', start:17, end:17, note:'최우선 안전기능', def:0},
-  {id:'4-2', group:'4', name:'OTA 펌웨어 업데이트·롤백 검증', owner:'Wade', prio:'P0', start:18, end:18, note:'v1.1 없음 — v1.0 범위로 복원', def:0},
-  {id:'4-3', group:'4', name:'장시간 연속성(누수/드리프트) 안정성 시험', owner:'Wade', prio:'P0', start:19, end:19, note:'목표 ≥5.5h', def:0},
-  {id:'4-4', group:'4', name:'펌웨어 파라미터 확정 문서화 (PWM/LED주기/샘플링/게인)', owner:'Wade', prio:'P1', start:19, end:19, note:'', def:0},
-  {id:'5-1', group:'5', name:'통합 회귀 테스트 (AT-01~AT-12 v1.0 해당 항목)', owner:'Wade', prio:'P0', start:20, end:20, note:'', def:0},
-  {id:'5-2', group:'5', name:'fNIRS FW v1.0 빌드 freeze·버전 태깅', owner:'Wade', prio:'P0', start:21, end:21, note:'', def:0},
+  {id:'R0-1', group:'R0', name:'S1 구조 분석 + Zephyr 매핑 설계', owner:'Wade', prio:'P1', start:1, end:1, note:'완료 (문서 작성 시점 기준)', def:100},
+  {id:'R0-2', group:'R0', name:'S2 프로토콜 상세분석, fNIRS 프로토콜 스펙 초안', owner:'Wade', prio:'P1', start:2, end:2, note:'커밋 메시지-diff 불일치 사례 있음 — 코드로 재검증 필요', def:0},
+  {id:'R0-3', group:'R0', name:'NCS west workspace 생성, S1 폴더구조 이식', owner:'Wade', prio:'P1', start:3, end:3, note:'', def:0},
+  {id:'R0-4', group:'R0', name:'RTC 기반 100ms 트리거 + Acquisition/BLE 태스크 스켈레톤 구현', owner:'Wade', prio:'P0', start:4, end:4, note:'ISR은 timestamp+semaphore만, BLE notify/I2C/malloc 금지', def:0},
+  {id:'R0-5', group:'R0', name:'CTRL 상태머신(재부팅/에러) 구현 + 주간 리뷰', owner:'Wade', prio:'P1', start:5, end:5, note:'S1 상태머신 + S2 에러코드(module_err_t) 결합', def:0},
+  {id:'R1-1', group:'R1', name:'AS7341 I2C 드라이버 포팅 — 파장별 raw intensity 분리 획득', owner:'Wade', prio:'P0', start:6, end:6, note:'§0 최우선 목표', def:0},
+  {id:'R1-2', group:'R1', name:'LED source multiplexing 타이밍 구현 — 크로스토크 없이 채널 분리', owner:'Wade', prio:'P0', start:7, end:7, note:'§0 최우선 목표', def:0},
+  {id:'R1-3', group:'R1', name:'파장별 분리 데이터 정확성 검증 + 패킷 포맷 반영', owner:'Wade', prio:'P0', start:8, end:8, note:'§0 최우선 목표 — 이 항목 확인 전 Rev2 착수 보류', def:0},
+  {id:'R2-1', group:'R2', name:'Ring buffer + BLE batching 구현', owner:'Wade', prio:'P0', start:9, end:9, note:'batching 크기는 실측 후 결정 (§11 미확정)', def:0},
+  {id:'R2-2', group:'R2', name:'Packet loss 검출 + reconnect 로직', owner:'Wade', prio:'P0', start:10, end:10, note:'', def:0},
+  {id:'R2-3', group:'R2', name:'BLE TX 재시도/크레딧 관리 (S2 패턴)', owner:'Wade', prio:'P1', start:11, end:11, note:'HVX 크레딧/대기큐 — batching 반영해 재검증', def:0},
+  {id:'R3-1', group:'R3', name:'Watchdog + sensor fault recovery', owner:'Wade', prio:'P0', start:12, end:12, note:'', def:0},
+  {id:'R3-2', group:'R3', name:'Battery/Temperature monitor + error log + 주간 리뷰', owner:'Wade', prio:'P0', start:13, end:13, note:'', def:0},
+  {id:'R3-3', group:'R3', name:'Reset reason 관리 + 열보호 상태머신', owner:'Wade', prio:'P0', start:14, end:14, note:'threshold/hysteresis는 임시값 — §11 미확정', def:0},
+  {id:'R3-4', group:'R3', name:'Rev1~3 통합 스모크 테스트 — 연속 acquisition+BLE 안정성 1차 확인', owner:'Wade', prio:'P0', start:15, end:15, note:'', def:0},
+  {id:'R3-5', group:'R3', name:'Rev0~3 실측 리뷰 + Rev4~7 일정 재수립 회의', owner:'Wade', prio:'P0', start:16, end:16, note:'재산정 지점 — 팀 합의로 새 목표일 확정', def:0},
+  {id:'R4', group:'R47', name:'Rev4 — Signal Validation', owner:'Wade', prio:'P2', start:0, end:0, note:'raw 신호 검증, 운동/breath-holding 실험, Δ[H2O] 재현성 — Day16 재산정 후 확정', def:0, excl:true},
+  {id:'R5', group:'R47', name:'Rev5 — Overnight Validation', owner:'Wade', prio:'P2', start:0, end:0, note:'장시간 안정성(자체 시계열 drift), EEG/EOG 동시측정은 조건부(§11 미확정)', def:0, excl:true},
+  {id:'R6', group:'R47', name:'Rev6 — Power Optimization', owner:'Wade', prio:'P2', start:0, end:0, note:'LED duty, BLE batching, Zephyr PM, peripheral PM', def:0, excl:true},
+  {id:'R7', group:'R47', name:'Rev7 — Productization', owner:'Wade', prio:'P2', start:0, end:0, note:'Thermal 최종화, calibration/versioning, 생산검사, DFU, 규제/품질대응', def:0, excl:true},
 ];
 
-const REVIEW_DOWNGRADE = [
-  {id:'RV-1', title:'3-4. 온보드 저장 vs 실시간 전송 정책·타임스탬프 확정',
-   body:'원 목록에 있던 항목이지만, 논문은 실시간 BLE 스트리밍으로 외부 컴퓨터에 저장하는 방식만 사용했고 온보드(플래시) 저장을 별도로 구현하지 않았습니다. 논문 재현 자체에는 필수가 아니므로, 우선순위를 P0→P2로 낮추고 "정책만 결정(짧은 BLE 단절 시 데이터 유실 허용 범위 정의)" 수준으로 축소하는 것을 제안합니다. Task 목록에서 완전히 지우지는 않았습니다 — 원래 계획표에 있던 항목이라 최종 결정은 팀 판단에 맡깁니다.'},
+const ARCH_MAPPING = [
+ ['태스크 분할', 'CTRL/BLE/ADC/SPI/I2C 5개', '동일 개념의 Zephyr 스레드', 'Acquisition/BLE TX/CTRL/Housekeeping — Acquisition-BLE 독립성 원칙에 맞게 재설계 (S1의 태스크 분리 철학은 유지)'],
+ ['재부팅/에러 상태머신', '`g_ctrl_status` → CTRL 태스크 경유, `NVIC_SystemReset()` 직접호출 금지', '`module_err_t` 에러코드 패턴 통일(Rev22)', 'S1의 "CTRL 경유 상태머신" + S2의 "통일된 에러코드 타입" 결합. Thermal Safety도 동일 패턴(Normal→Warning→Duty감소→OFF)'],
+ ['네이밍', '`g_/s_/m_/sem_/_t`, `module_x_*`', '`module_x_*` → `m_x_*` 리네이밍(Rev20-21)', 'S2식 `m_x_*` 채택 (최신 관례)'],
+ ['GPREGRET 상태보존', 'LED 디밍 상태 보존', '계승', 'Thermal Warning/Trip 상태도 리부팅 후 복원 검토'],
+ ['OTA/DFU', '자체 DFU, `SECURE_ENABLED→DFU_ENABLED` 종속', 'MCUboot + sysbuild 전환(Rev20-21), OTA(SMP, Rev24)', 'MCUboot 그대로 채택 (Zephyr 표준, S2 선례 존재)'],
+ ['BLE 정책', 'SoftDevice `sd_*`', 'Tx power -8dBm 고정(Rev30), 전 패킷 32bit us 타임스탬프(Rev34), HVX 크레딧/대기큐(Rev38)', 'S2 정책 그대로 차용 — 단, fNIRS는 batching이 추가 필요'],
+ ['디바이스 분기', '`DEVICE_TYPE`(A/C/H)', '`DEVICE_TYPE`(A/C/CS/H)', '불필요(단일기기) — 매크로 구조만 확장 대비 유지'],
 ];
-const REVIEW_ADD = [
-  {id:'RV-2', title:'배터리 과충전·과방전 보호 회로 인터페이스 검증 (신규 제안, 미포함)',
-   body:'논문은 110mAh/3.7V Li-Po 배터리를 사용한다고만 명시했고, 충전/방전 보호에 대한 언급이 없습니다. 하지만 실제 웨어러블 제품에서는 41℃ 열 보호 로직과 마찬가지로 배터리 과충전·과방전·UVLO 대응이 안전에 직결되는 항목입니다. 현재 21영업일 일정이 이미 여유 없이 꽉 찬 상태라 자동으로 일정에 추가하지 않았습니다 — 포함하기로 결정하면 일정을 다시 조정(기간 연장 또는 다른 항목 축소)해야 합니다.'},
+
+const ARCH_FIELDS = [
+ ['timestamp', 'S2 관례: 32bit us 단위'],
+ ['monotonic sequence number', '누락 검출용'],
+ ['640/680/950nm raw intensity', '3파장 개별'],
+ ['sensor gain, integration time', '변경 시점 추적용'],
+ ['LED drive setting/duty', '—'],
+ ['battery 상태', '—'],
+ ['status/error flag', 'S2 `module_err_t` 패턴 계승'],
+ ['firmware/config version', '—'],
 ];
 
 const AT_ITEMS = [
-  {id:'AT-01', name:'Sampling', cond:'10Hz 장시간 수집', crit:'모든 sample timestamp/SEQ 연속, 허용 jitter 내 만족'},
-  {id:'AT-02', name:'BLE Stress', cond:'connection parameter 변화/간헐적 혼잡', crit:'acquisition period 불변, drop count 정확히 검출'},
-  {id:'AT-03', name:'Buffer', cond:'의도적 BLE block', crit:'ring buffer 정상 동작, overflow 시 silent loss 없음'},
-  {id:'AT-04', name:'Sensor Saturation', cond:'광량 과다/부족', crit:'포화/저신호 상태 검출 및 flag'},
-  {id:'AT-05', name:'Configuration', cond:'gain/integration/LED 설정 변경', crit:'변경 시점이 데이터에 정확히 기록'},
-  {id:'AT-06', name:'Power', cond:'논문 기준 모드 소비전력', crit:'baseline 확보 및 FW 변경별 회귀 비교'},
-  {id:'AT-07', name:'Thermal', cond:'최악 조건 장시간', crit:'41℃ 미만 유지, 보호 동작 정상 (0.7℃/min 반응속도 반영)'},
-  {id:'AT-08', name:'Runtime', cond:'연속 구동', crit:'논문 재현 5.5h 이상; 제품 목표는 별도'},
-  {id:'AT-09', name:'Reconnect', cond:'BLE 강제 disconnect/reconnect', crit:'데이터 gap 식별 가능, 시스템 hang 없음'},
-  {id:'AT-10', name:'Watchdog', cond:'I2C/BLE task fault 주입', crit:'자동 복구 및 fault log'},
-  {id:'AT-11', name:'Physiological Validation', cond:'운동(20s휴식+30s운동×2)/숨참기(60s+20s×2), N=4, 10Hz', crit:'논문 보고 재현 가능한 상태 의존 변화 확인'},
-  {id:'AT-12', name:'Overnight', cond:'EEG/EOG 동시 수면 측정', crit:'장시간 안정성 + clock alignment 확인'},
+  {id:'AT-01', name:'Sampling', cond:'10Hz 장시간', crit:'timestamp/seq 연속, jitter 기준 만족'},
+  {id:'AT-02', name:'BLE Stress', cond:'connection parameter 변화/혼잡', crit:'acquisition timing 불변'},
+  {id:'AT-03', name:'Buffer', cond:'BLE 강제 block', crit:'ring buffer 정상, overflow silent loss 없음'},
+  {id:'AT-04', name:'Sensor Saturation', cond:'광량 과다/부족', crit:'포화/저신호 flag'},
+  {id:'AT-05', name:'Configuration', cond:'gain/integration/LED 변경', crit:'변경 시점 데이터 기록'},
+  {id:'AT-06', name:'Power', cond:'논문기준 모드 소비전력', crit:'baseline 확보, FW 변경별 회귀비교'},
+  {id:'AT-07', name:'Thermal', cond:'최악조건 장시간', crit:'41℃ 미만, 보호로직 정상'},
+  {id:'AT-08', name:'Runtime', cond:'연속구동', crit:'연구재현 5.5h 이상, 제품목표 8~10h 별도 검증'},
+  {id:'AT-09', name:'Reconnect', cond:'강제 disconnect/reconnect', crit:'gap 식별 가능, hang 없음'},
+  {id:'AT-10', name:'Watchdog', cond:'I2C/BLE fault 주입', crit:'자동복구 + fault log'},
+  {id:'AT-11', name:'Physiological Validation', cond:'운동/숨참기', crit:'상태의존 변화 재현'},
+  {id:'AT-12', name:'Overnight', cond:'장시간 연속 측정 (EEG/EOG 동시측정은 실사용 시나리오 미정 — §11 참고)', crit:'장시간 안정성 + 자체 시계열 정확도(clock drift)'},
 ];
 
 const RISKS = [
-  {id:'R0', text:'640nm LED 파트넘버 확인 완료 — XZM2CRK54WA-8 (해당 Task는 목록에서 제거, 결과만 기록)', def:true},
-  {id:'R1', text:'Threshold/Spectral 3개 모순(NREM·REM 방향, spectral 대역, sigma band 범위)은 저자 코드·공개자료 확인 전까지 펌웨어/서버 어느 쪽에도 구현하지 않는다.', def:false},
-  {id:'R2', text:'Overnight 모드 샘플링 레이트가 논문에 명시되어 있지 않아, 10Hz 고정 후 추가 변경 가능성을 열어둔다.', def:false},
-  {id:'R3', text:'OTA는 v1.1이 존재하지 않아 v1.0 범위로 복원되었다 — 기존에 버퍼로 남겨뒀던 마지막 이틀이 실작업일로 전환되어 일정 여유가 완전히 소진되었다. 추가 이슈 발생 시 완료일이 더 밀릴 수 있다.', def:false},
-  {id:'R4', text:'추석 연휴(9/24~9/25), 개천절 대체휴일(10/5), 한글날(10/9)까지 총 4일을 실제 휴무로 반영하면서, 목표 완료일이 10/9 → 10/15(목)로 순연되었다 — 이는 지연이 아니라 실제 근무일 21일을 그대로 유지하기 위한 재조정이다.', def:false},
-  {id:'R5', text:'본 일정은 토/일요일과 확인된 공휴일(추석, 개천절 대체휴일, 한글날)을 전면 제외한 순수 근무일 기준으로 재계산되었다 — 9/11~10/15가 근무일 21일이며, 23개 Task가 여유 없이 꽉 채워져 있다.', def:false},
-  {id:'R6', text:'10/9(한글날)도 휴무로 반영하기로 확정했다 (2026-09-15 확인). Day18 이후 일정이 하루씩 순연되어 최종 완료일은 10/15(목)이다.', def:true},
+  {id:'A1', text:'Bare-metal vs Zephyr 최종 확정 — 본 문서는 Zephyr로 잠정 결론, 팀 승인 필요', def:false},
+  {id:'A2', text:'RTC vs TIMER 정확한 선택 및 조합 방식', def:false},
+  {id:'A3', text:'Sampling jitter / clock drift 허용 기준(수치)', def:false},
+  {id:'A4', text:'BLE connection interval / PHY / MTU / batch size', def:false},
+  {id:'A5', text:'Ring buffer 길이, flash logging 필요 여부', def:false},
+  {id:'A6', text:'제품 목표 runtime 8h vs 10h', def:false},
+  {id:'A7', text:'LED duty cycle 정책, AS7341 gain/integration 정책', def:false},
+  {id:'A8', text:'Thermal warning/stop threshold, 온도센서 위치', def:false},
+  {id:'A9', text:'배터리 용량, DFU 방식(사양), calibration 저장 구조 — 과충전/과방전(UVLO) 보호 회로 인터페이스 검증도 이 항목에 포함해 함께 결정 필요 (41℃ 열보호와 동급의 안전 이슈)', def:false},
+  {id:'A10', text:'생산검사(production test) 모드 구조', def:false},
+  {id:'A11', text:'규제 관점 추가 안전/신뢰성 요구사항', def:false},
+  {id:'A12', text:'논문 내 모순 2건(sleep threshold 방향성, spectral band 서술) — 저자 코드/공개자료 확인 전까지 펌웨어/서버 어느 쪽에도 구현하지 않음', def:false},
+  {id:'A13', text:'EEG/EOG 동시측정 및 외부 장비 time alignment이 실제 제품 요구사항인지 여부 — RTC/Timer 하이브리드 구조 자체는 이 여부와 무관하게 fNIRS 자체 시계열 정확도를 위해 필요', def:false},
+  {id:'A14', text:'[트래커 반영 메모] 10/8(목)이 원본 문서 §9 일정표에 Day 번호 없이 통째로 빠져 있다 — Day15(10/7)에서 10/9 휴무 안내를 거쳐 바로 Day16(10/12)로 넘어감. 오탈자/누락으로 보이나, 문서 내용을 임의로 고치지 않고 그대로 반영했다. 이 날에도 작업을 배정할지 확인 필요.', def:false},
 ];
 
 const DAYPLAN = [
- [1,'Week 1','9/11(금)','킥오프·인수 검증','US코드/펌웨어코드/APK 수령 최종 확인, 32MHz 크리스탈 부팅 검증 리뷰','완료 항목 재확인'],
- [2,'Week 2','9/14(월)','클럭트리/타이머 재계산','32MHz 기준 클럭트리·타이머 프리스케일 재계산 완료','0-3'],
- [3,'Week 2','9/15(화)','개발 범위 확정','논문 기반 개발 범위 확정 — 모순 3건 대응 방침, OTA 포함 범위 등 문서화','0-4'],
- [4,'Week 2','9/16(수)','PWM 조정','PWM 주파수·듀티 조정(LED 광강도 설정)','1-1'],
- [5,'Week 2','9/17(목)','LED 드라이버 캘리브레이션','LED 정전류 드라이버·채널별 광강도 캘리브레이션 (3파장 파트넘버 확정 반영)','1-2, 주간 리뷰'],
- [6,'Week 2','9/18(금)','LED 통신주기 결정 (착수)','LED 통신(점등) 주기 — source multiplexing 시퀀스 설계 착수','1-3 착수'],
- [7,'Week 3','9/21(월)','LED 통신주기 결정 (완료)','source multiplexing 시퀀스 확정','1-3 완료'],
- [8,'Week 3','9/22(화)','dark period 확정','LED on/off settling time·dark period 확정 (0.7℃/min 초기발열속도 반영)','1-4'],
- [9,'Week 3','9/23(수)','ADC 샘플링/게인 확정','Photodiode/ADC 샘플링 레이트·게인 확정, AS7341 채널별 개별 gain 구조 적용','2-1'],
- [10,'Week 4','9/28(월)','LED-ADC 동기화','추석 연휴(9/24~25) 이후 재개 — 타임 멀티플렉싱 동기화 (source-detector timing) 구현','2-2, 주간 리뷰'],
- [11,'Week 4','9/29(화)','Dark-frame subtraction','Ambient light 제거(dark-frame subtraction) 구현','2-3'],
- [12,'Week 4','9/30(수)','모션/SQI + SNR 반영','모션/포화 검출 및 SQI 플래그 구현, rigid/flex SNR 벤치마크 임계치 반영','2-4'],
- [13,'Week 4','10/1(목)','패킷 포맷 정의','데이터 패킷 포맷·버전 필드 정의(raw counts+상태바이트+seq+timestamp)','3-1'],
- [14,'Week 4','10/2(금)','BLE 전송/재전송','BLE 전송 처리·손실패킷 검출/재전송 검증(32MHz 기준)','3-2'],
- [15,'Week 5','10/6(화)','APK 연동','개천절 대체휴일(10/5) 이후 재개 — APK 소스 연동(FW-실시간 스트리밍·로깅)','3-3, 주간 리뷰'],
- [16,'Week 5','10/7(수)','저장정책 + 동기화 검증','온보드 저장 정책(재검토 대상) 결정, EEG/EOG epoch(30s/5s) 동기화 요구사항 검증','3-4(P2) / 3-5'],
- [17,'Week 5','10/8(목)','열 안전 최우선 구현','LED 듀티 기반 소비전류·발열 측정 + 41℃ 하드 보호 로직 구현','4-1 — 최우선 안전기능'],
- [18,'Week 6','10/12(월)','OTA 검증 (복원)','OTA 펌웨어 업데이트·롤백 검증 — v1.1 없음, v1.0 범위로 복원','4-2 · 한글날(10/9) 휴무 반영으로 재개'],
- [19,'Week 6','10/13(화)','장시간 안정성 + 문서화','연속성(누수/드리프트) 안정성 시험(목표 ≥5.5h), 펌웨어 파라미터 확정 문서화','4-3 / 4-4'],
- [20,'Week 6','10/14(수)','통합 회귀 테스트','AT-01~AT-12 v1.0 해당 항목 회귀 테스트','5-1'],
- [21,'Week 6','10/15(목) ★목표일','FW v1.0 Freeze','fNIRS FW v1.0 build freeze·버전 태깅','5-2 — 목표 완료일 (한글날 포함 휴일 반영 최종 재조정)'],
+ [1,'Week 1','9/14(월)','S1 구조 분석 + Zephyr 매핑','S1 구조 분석 + Zephyr 매핑 설계 (완료)','R0-1'],
+ [2,'Week 1','9/15(화)','S2 프로토콜 분석','S2 프로토콜 상세분석, fNIRS 프로토콜 스펙 초안','R0-2'],
+ [3,'Week 1','9/16(수)','west workspace 생성','NCS west workspace 생성, S1 폴더구조 이식','R0-3'],
+ [4,'Week 1','9/17(목)','RTC 트리거 + 태스크 스켈레톤','RTC 기반 100ms 트리거 + Acquisition/BLE 태스크 스켈레톤 구현','R0-4'],
+ [5,'Week 1','9/18(금)','CTRL 상태머신 + 주간 리뷰','CTRL 상태머신(재부팅/에러) 구현, 주간 리뷰','R0-5'],
+ [6,'Week 2','9/21(월)','AS7341 I2C 드라이버 포팅','AS7341 I2C 드라이버 포팅 — 파장별 raw intensity 분리 획득','R1-1 — §0 최우선'],
+ [7,'Week 2','9/22(화)','LED source multiplexing','LED source multiplexing 타이밍 구현 — 크로스토크 없이 채널 분리','R1-2 — §0 최우선'],
+ [8,'Week 2','9/23(수)','파장별 분리 정확도 검증','파장별 분리 데이터 정확성 검증, 확인되면 패킷 포맷에 반영','R1-3 — §0 최우선'],
+ [9,'Week 4','9/28(월)','Ring buffer + BLE batching','추석 연휴(9/24~25) 이후 재개 — Ring buffer + BLE batching 구현','R2-1'],
+ [10,'Week 4','9/29(화)','Packet loss + reconnect','Packet loss 검출 + reconnect 로직','R2-2'],
+ [11,'Week 4','9/30(수)','BLE TX 재시도/크레딧','BLE TX 재시도/크레딧 관리(S2 패턴)','R2-3'],
+ [12,'Week 4','10/1(목)','Watchdog + fault recovery','Watchdog + sensor fault recovery','R3-1'],
+ [13,'Week 4','10/2(금)','Battery/Temp monitor + 리뷰','Battery/Temperature monitor + error log, 주간 리뷰','R3-2'],
+ [14,'Week 5','10/6(화)','Reset reason + 열보호','개천절 대체휴일(10/5) 이후 재개 — Reset reason 관리 + 열보호 상태머신','R3-3'],
+ [15,'Week 5','10/7(수)','Rev1~3 통합 스모크 테스트','연속 acquisition+BLE 안정성 1차 확인','R3-4'],
+ [16,'Week 6','10/12(월) ★재산정','Rev0~3 리뷰 + Rev4~7 재수립','한글날(10/9) 휴무 반영으로 재개 — Rev0~3 실측 기반으로 Rev4~7 일정 재수립 회의','R3-5 — 10/8(목)은 원본 문서에 Day 배정 없이 누락됨(미확정 항목 A14 참고)'],
 ];
 
 // Per-day expand content: tips / verify / caution / self-check items.
 // checks[].id must be unique across the whole file (used as the persisted key).
 const DAY_DETAILS = {
  1: { tips:[
-      '받은 코드를 바로 고치지 말고, 우선 그대로 한 번 빌드·부팅해서 "인수 시점의 기준선"을 먼저 확보하세요.',
-      '회로도·실물 보드의 크리스탈 값, LED 파트넘버(640/680/950nm)를 문서와 실측으로 한 번씩 대조하세요.'],
-    verify:[
-      '부팅 로그/레지스터 값에 클럭 소스가 정확히 32MHz로 찍히는지',
-      '기존 펌웨어 버전 태그·커밋 이력이 명확한지 (없으면 지금 태깅)',
-      'APK 소스 저장소 접근 권한과 최신 브랜치 여부'],
-    caution:['인수인계 문서 없이 코드만 받으면 "왜 이렇게 짜여있는지" 파악 시간이 배로 듭니다 — 이전 담당자 연락 가능하면 질문 리스트부터 정리하세요.'],
+      'S1(TedreamS1)의 태스크 분할(CTRL/BLE/ADC/SPI/I2C)을 그대로 옮기지 말고, Zephyr 스레드/우선순위 모델에 맞게 재해석하세요.',
+      'S2(NCS_TedreamS2)가 이미 같은 Zephyr 전환을 해봤으니, S2의 스레드 구성을 1차 참고 템플릿으로 삼으세요.'],
+    verify:['S1의 상태머신(g_ctrl_status)이 어떤 이벤트로 전이되는지 표로 정리했는지','S1 태스크 → Zephyr k_thread/k_work 1:1 매핑표를 만들었는지'],
+    caution:['"구조를 그대로 옮기는 것"과 "Zephyr 철학에 맞게 재설계하는 것"은 다릅니다 — 특히 S1의 busy-wait/polling 패턴은 반드시 event-driven으로 바꿔야 합니다.'],
     checks:[
-      {id:'d1-1', text:'펌웨어 + APK 소스 전체 clone 및 빌드 성공'},
-      {id:'d1-2', text:'32MHz 부팅 로그 확인'},
-      {id:'d1-3', text:'이전 버전 대비 변경 이력(diff) 확인'},
+      {id:'d1-1', text:'S1 태스크 → Zephyr 스레드 매핑표 작성'},
+      {id:'d1-2', text:'S1 상태머신 다이어그램 정리'},
+      {id:'d1-3', text:'Zephyr 채택 근거 문서화'},
     ]},
  2: { tips:[
-      '전체 코드베이스에서 이전 크리스탈 값 기준으로 하드코딩된 타이머 상수가 남아있는지 grep으로 먼저 훑으세요.',
-      '타이머 사용처(PWM, ADC 샘플링, BLE tick 등)를 표로 정리한 뒤 하나씩 재계산하면 누락을 줄일 수 있습니다.'],
-    verify:['PWM 주파수, ADC 샘플링 타이머, BLE 타임스탬프 tick이 모두 새 클럭 기준으로 재계산됐는지','재계산된 값이 실측(오실로스코프/로직 분석기)과 일치하는지'],
-    caution:['일부 타이머만 고치고 넘어가면 부분적으로 타이밍이 어긋나는 미묘한 버그가 나중에 남습니다 — 반드시 전수 조사.'],
+      'S2의 REVISION_HISTORY에서 커밋 메시지와 실제 diff가 불일치하는 사례(v0.1.4, v0.1.8 등)가 있었다고 하니, 프로토콜 관련 커밋은 반드시 코드 자체로 재검증하세요.',
+      '타임스탬프(32bit us), 에러코드(module_err_t), Tx power(-8dBm 고정) 등 S2 정책을 표로 정리하세요.'],
+    verify:['fNIRS 패킷에 필요한 필드(raw×3, gain, status 등)가 S2 정책과 어디까지 호환되고 어디서 확장이 필요한지','HVX 크레딧/대기큐 정책이 fNIRS의 batching 요구와 충돌하지 않는지'],
+    caution:['S2 정책을 그대로 가져오되, batching은 S2에 없던 요구사항이므로 이 부분만 신규 설계가 필요합니다 — "다 있는 걸 가져다 쓰는 프로젝트"라고 착각하면 안 됩니다.'],
     checks:[
-      {id:'d2-1', text:'전체 타이머 prescaler 재계산 표 작성'},
-      {id:'d2-2', text:'실측 주파수로 재계산 값 검증'},
-      {id:'d2-3', text:'오차 범위(%) 문서화'},
+      {id:'d2-1', text:'S2 BLE 정책 표 작성 (Tx power/타임스탬프/에러코드)'},
+      {id:'d2-2', text:'커밋-diff 불일치 사례 별도 목록화'},
+      {id:'d2-3', text:'fNIRS 프로토콜 스펙 초안 작성'},
     ]},
- 3: { tips:[
-      '논문에서 발견한 3개 모순(Threshold NREM/REM 방향, spectral 대역, sigma band 범위) 대응 방침을 이 문서에 명문화하세요.',
-      'OTA를 v1.0 범위로 포함하기로 한 결정도 이 문서에 근거와 함께 남겨두세요.'],
-    verify:['범위 문서에 대해 팀/이해관계자 리뷰가 끝났는지','"목록 재검토" 탭의 재고려 후보·추가 권장 항목 결정도 함께 반영됐는지'],
-    caution:['범위 문서 없이 개발부터 시작하면 나중에 "이거 원래 하기로 한 거야?" 같은 논쟁이 반복됩니다.'],
+ 3: { tips:['west.yml/manifest 구조부터 잡고, S1 폴더 구조를 그대로 복사하지 말고 모듈 단위(module_x)로 재구성하면서 이식하세요.'],
+    verify:['west build가 최소 구성(빈 스켈레톤)에서 정상적으로 성공하는지','폴더 구조가 이후 Rev1~7에서 확장 가능한 형태인지(drivers/, app/, protocol/ 분리 등)'],
+    caution:['이 단계에서 폴더 구조를 대충 잡으면 Rev1부터 계속 리팩토링 비용이 발생합니다 — 오늘은 구조 설계에 충분히 시간을 쓰세요.'],
     checks:[
-      {id:'d3-1', text:'개발 범위 문서 작성 완료'},
-      {id:'d3-2', text:'모순 3건 대응 방침 명문화'},
-      {id:'d3-3', text:'이해관계자 승인/공유'},
+      {id:'d3-1', text:'west workspace 생성 및 clean build 성공'},
+      {id:'d3-2', text:'모듈 폴더 구조 확정'},
+      {id:'d3-3', text:'구조 문서 초안 작성'},
     ]},
- 4: { tips:[
-      '3파장(640/680/950nm)은 정격전류·순방향전압이 다르므로, 채널별로 듀티 상한을 따로 설정하세요 (특히 640nm=XZM2CRK54WA-8 데이터시트 정격 확인).',
-      'PWM 주파수와 AS7341 integration time 사이에 aliasing(beat frequency)이 생기지 않는지 미리 계산해보세요.'],
-    verify:['채널별 duty-광량 관계가 예상대로 선형(또는 알려진 곡선)에 가까운지','PWM 주파수가 10Hz 프레임 예산과 충돌하지 않는지'],
-    caution:['PWM 주파수를 낮게 잡으면 ADC 샘플링과 간섭(beat)이 생겨 미세한 주기적 노이즈로 나타날 수 있습니다.'],
+ 4: { tips:['ISR은 timestamp capture + semaphore/event set만 하도록 처음부터 강제하세요 — BLE notify, log, flash write, I2C 트랜잭션, malloc은 ISR 안에 절대 넣지 마세요.'],
+    verify:['RTC 인터럽트 주기가 실측으로 100ms에 근접한지(지터 확인)','Acquisition Task와 BLE TX Task가 실제로 별도 스레드/우선순위로 분리되어 있는지'],
+    caution:['이 스켈레톤이 이후 모든 Rev의 기반이 됩니다 — "일단 동작하게만" 만들지 말고 우선순위 원칙(Acquisition > BLE TX > Control > Battery/Temp > Logging)을 지금부터 지키세요.'],
     checks:[
-      {id:'d4-1', text:'3파장 개별 duty-광량 곡선 측정'},
-      {id:'d4-2', text:'PWM-ADC 샘플링 간섭 여부 확인'},
-      {id:'d4-3', text:'데이터시트 정격전류 초과 없음 확인'},
+      {id:'d4-1', text:'RTC 100ms ISR 구현 (timestamp+semaphore만)'},
+      {id:'d4-2', text:'Acquisition/BLE Task 스레드 분리 확인'},
+      {id:'d4-3', text:'태스크 우선순위 설정 및 문서화'},
     ]},
- 5: { tips:[
-      '확정된 파트넘버 기준으로 정전류 드라이버 저항값을 재계산하고, 채널 간 광량 편차는 소프트웨어 게인으로 보정하세요.',
-      '캘리브레이션 값은 하드코딩하지 말고, 보드별로 저장 가능한 구조(플래시/EEPROM 테이블)로 설계하세요.'],
-    verify:['3파장 동시 점등 시 열간섭으로 인한 광출력 drift가 있는지','같은 보드를 재부팅했을 때 캘리브레이션 값 재현성이 있는지'],
-    caution:['LED는 배치(batch)마다 개체차가 있어 캘리브레이션값을 하드코딩하면 양산 시 대응이 안 됩니다.'],
+ 5: { tips:['S1의 "CTRL 경유 상태머신"(NVIC_SystemReset 직접호출 금지) 패턴과 S2의 통일된 에러코드(module_err_t) 패턴을 결합하세요.'],
+    verify:['모든 리셋/에러 경로가 CTRL 상태머신을 거치는지(직접 리셋 호출이 코드 어디에도 없는지 grep)','에러코드 타입이 전 모듈에 일관되게 적용됐는지'],
+    caution:['이번 주 리뷰에서 Rev0 산출물이 Rev1 착수 조건을 만족하는지 팀과 함께 확인하고 넘어가세요 — 급하게 Rev1로 넘어가면 기반이 흔들립니다.'],
     checks:[
-      {id:'d5-1', text:'채널별 캘리브레이션 테이블 저장 구조 구현'},
-      {id:'d5-2', text:'온도별 광출력 변화 측정'},
-      {id:'d5-3', text:'캘리브레이션 값 재현성 확인'},
+      {id:'d5-1', text:'CTRL 상태머신 구현'},
+      {id:'d5-2', text:'직접 리셋 호출 없음 확인 (grep)'},
+      {id:'d5-3', text:'Rev0 주간 리뷰 완료'},
     ]},
- 6: { tips:[
-      '3파장을 순차 점등(time-division)할지 동시 점등 후 분광 분리할지 먼저 결정하세요 — AS7341은 다채널 동시 획득이 가능하지만, source-detector 3cm 거리에서 파장별 크로스토크가 없는 방식을 우선하세요.',
-      '파장별 점등-적분 타이밍을 다이어그램으로 먼저 그려보고 코드를 짜면 실수가 줄어듭니다.'],
-    verify:['각 파장 점등 구간과 ADC 적분 구간이 정확히 겹치는지','파장 전환 시 이전 파장의 잔광(after-glow)이 다음 채널에 섞이지 않는지'],
-    caution:['파장 전환을 너무 빠르게 하면 드라이버 스위칭 노이즈가 커지고, 너무 느리면 10Hz 프레임 예산을 못 맞춥니다.'],
+ 6: { tips:['AS7341 데이터시트의 채널별 gain/integration time 레지스터 맵을 먼저 표로 정리하고 드라이버를 짜면 실수가 줄어듭니다.','지금은 gain/integration을 고정값으로 시작하세요 — 런타임 자동조절은 이후 단계.'],
+    verify:['I2C 트랜잭션이 Zephyr i2c 드라이버 API로 정상 동작하는지(레지스터 값이 데이터시트와 일치하는지)','채널별로 개별 raw count 값을 읽어올 수 있는지'],
+    caution:['오늘은 "일단 값이 읽힌다"가 목표입니다 — 파장별 분리 정확도 검증은 Day8에 별도로 합니다. 너무 빨리 최적화하려 하지 마세요.'],
     checks:[
-      {id:'d6-1', text:'파장별 점등/적분 타이밍 다이어그램 작성'},
-      {id:'d6-2', text:'10Hz 프레임 내 3파장 시퀀스 시간 예산 확인'},
+      {id:'d6-1', text:'AS7341 레지스터 맵 정리'},
+      {id:'d6-2', text:'I2C read/write 드라이버 구현'},
+      {id:'d6-3', text:'채널별 raw count 획득 확인'},
     ]},
- 7: { tips:['어제 설계한 타이밍 다이어그램대로 실제 구현하고, 파장 전환 속도를 여러 단계로 바꿔가며 크로스토크를 실측하세요.'],
-    verify:['크로스토크/잔광이 허용 범위 이내인지 (다음 파장 신호에 영향 없는지)','시퀀스가 프레임마다 지터 없이 반복되는지'],
-    caution:['이 항목이 확정돼야 이후 2-1, 2-2 작업의 전제가 되므로, 애매하게 넘어가지 말고 오늘 확정하세요.'],
+ 7: { tips:['3파장(640/680/950nm)을 순차 점등할지 동시 점등할지 결정하고, 점등-적분 타이밍 다이어그램을 먼저 그리세요.'],
+    verify:['파장 간 크로스토크가 없는지(한 파장 점등 시 다른 채널에 신호가 새어들지 않는지)','점등 시퀀스가 RTC 100ms 주기 안에 안정적으로 들어가는지'],
+    caution:['크로스토크 검증 결과에 따라 Rev1 기간이 늘어날 수 있다고 원 문서에도 명시되어 있습니다 — 오늘/내일 검증에서 문제가 보이면 일정 재조정을 주저하지 마세요.'],
     checks:[
-      {id:'d7-1', text:'크로스토크/잔광 실측 완료'},
-      {id:'d7-2', text:'source multiplexing 시퀀스 최종 확정 및 문서화'},
+      {id:'d7-1', text:'점등/적분 타이밍 다이어그램 작성'},
+      {id:'d7-2', text:'크로스토크 실측'},
+      {id:'d7-3', text:'RTC 주기 내 시퀀스 시간 예산 확인'},
     ]},
- 8: { tips:[
-      '모든 LED가 꺼진 상태에서 ambient light만 측정하는 dark frame을 프레임마다 최소 1회 삽입하세요.',
-      '0.7℃/min라는 빠른 초기 발열속도를 고려해, dark period 길이를 열 안정 목적으로도 활용할 수 있는지 검토하세요.'],
-    verify:['dark frame 값이 매 프레임 안정적인 baseline을 유지하는지','실내조명 변화(사람이 지나가며 그림자 지는 정도)에 dark frame이 얼마나 민감한지'],
-    caution:['dark period가 너무 짧으면 LED off 직후의 과도상태(잔광)가 dark frame에 섞여 ambient 추정이 부정확해집니다.'],
+ 8: { tips:['검증이 끝나면 바로 패킷 포맷(timestamp/seq/raw×3/gain/status)에 반영해서, Rev2부터는 안정된 패킷 구조 위에서 작업할 수 있게 하세요.'],
+    verify:['3파장 raw intensity가 각각 독립적으로, 재현성 있게 읽히는지(반복 측정 시 값이 안정적인지)','§0의 최우선 목표가 실제로 달성됐다고 팀에 보고할 수 있는 수준인지'],
+    caution:['이 항목이 확인되기 전까지는 Rev2(BLE)로 넘어가지 않는 것이 원 문서의 원칙입니다 — 여기서 시간이 더 필요하면 Rev2 착수를 미루세요.'],
     checks:[
-      {id:'d8-1', text:'dark frame 삽입 위치·길이 확정'},
-      {id:'d8-2', text:'LED off 과도상태 영향 없음 확인'},
-      {id:'d8-3', text:'조명 변화 시나리오 테스트'},
+      {id:'d8-1', text:'파장별 raw 재현성 검증'},
+      {id:'d8-2', text:'패킷 포맷에 raw/gain/status 필드 반영'},
+      {id:'d8-3', text:'§0 최우선 목표 달성 여부 팀 보고'},
     ]},
- 9: { tips:[
-      'AS7341은 채널별로 gain(1x~512x)과 integration time을 따로 설정할 수 있습니다 — 3파장 반사광 세기가 다르므로 채널별 최적값을 각각 찾으세요.',
-      '피부색·부착 위치별 반사율 차이에 대응하려면 초기 자동 게인 보정(auto-range) 루틴을 고려하세요.'],
-    verify:['각 채널이 포화(saturation)되지 않는 최대 게인','노이즈 바닥 대비 충분한 SNR이 확보되는 최소 게인'],
-    caution:['게인을 고정값으로 하드코딩하면 사람마다 다른 반사율에 대응하지 못해 어떤 사람에게는 포화, 어떤 사람에게는 저신호가 날 수 있습니다.'],
+ 9: { tips:['batching 크기는 감으로 정하지 말고, connection interval/MTU/latency 대비 실측 후보 몇 개(예: 3/5/10샘플)를 비교하세요.'],
+    verify:['ring buffer가 BLE 지연 중에도 acquisition을 막지 않는지 (목표: BLE가 5~10초 막혀도 데이터 유실 없음)'],
+    caution:['batching 크기를 키우면 배터리는 아끼지만 실시간성이 떨어집니다 — 이 트레이드오프를 문서에 남겨두세요.'],
     checks:[
-      {id:'d9-1', text:'채널별 saturation 임계 게인 측정'},
-      {id:'d9-2', text:'노이즈 바닥 대비 SNR 확인'},
-      {id:'d9-3', text:'자동 게인 보정 필요 여부 결정'},
+      {id:'d9-1', text:'Ring buffer 구현'},
+      {id:'d9-2', text:'batching 후보 3종 이상 실측 비교'},
+      {id:'d9-3', text:'5~10초 BLE 지연 시나리오 테스트'},
     ]},
- 10:{ tips:[
-      'LED 점등과 ADC 적분 동기화는 폴링보다 인터럽트 기반으로 구현해 지터를 최소화하세요.',
-      'BLE 스택 인터럽트와 LED-ADC 타이밍 인터럽트의 우선순위를 미리 설계해두면 나중에 간헐적 프레임 드랍을 디버깅할 필요가 없습니다.'],
-    verify:['점등 시점과 적분 시작 시점 사이 지연이 매 사이클 일정한지(지터 실측)','BLE 활동이 활발한 상태에서도 타이밍이 흔들리지 않는지'],
-    caution:['인터럽트 우선순위를 설계하지 않고 넘어가면, BLE 트래픽이 몰릴 때만 재현되는 간헐적 버그가 생겨 디버깅이 매우 어려워집니다.'],
+ 10:{ tips:['sequence number 기반 loss 검출은 host(PC/앱) 쪽에서도 동일하게 구현해야 실제로 의미가 있습니다 — 이번에 host 쪽 검증 스크립트도 같이 준비하세요.'],
+    verify:['강제 disconnect 후 reconnect 시 데이터 gap이 명확히 식별되는지','reconnect 동안 ring buffer가 넘치지 않는지'],
+    caution:['reconnect 로직에서 무한 재시도는 배터리를 다 태울 수 있습니다 — 재시도 상한/백오프 정책을 반드시 넣으세요.'],
     checks:[
-      {id:'d10-1', text:'점등-적분 지연 지터 오실로스코프로 측정'},
-      {id:'d10-2', text:'인터럽트 우선순위 표 작성'},
-      {id:'d10-3', text:'BLE 활동 중 타이밍 안정성 확인'},
+      {id:'d10-1', text:'SEQ 기반 loss 검출 구현'},
+      {id:'d10-2', text:'강제 disconnect/reconnect 테스트'},
+      {id:'d10-3', text:'재시도 상한/백오프 정책 구현'},
     ]},
- 11:{ tips:[
-      'dark frame을 매 프레임 뺄지, N프레임마다 갱신한 baseline을 사용할지 먼저 정하세요 — 실시간 연산 부하와 정확도의 트레이드오프입니다.',
-      '온도가 오르면 dark baseline 자체가 서서히 drift할 수 있으니, 41℃ 보호 로직(D17)과 연계해 주기적 재보정을 고려하세요.'],
-    verify:['subtraction 후 결과값이 물리적으로 타당한 범위인지(비정상적 음수 남발 없는지)'],
-    caution:['장시간 운용 중 dark baseline이 서서히 틀어질 수 있다는 점을 염두에 두고, 최소한 로그로는 남겨두세요.'],
+ 11:{ tips:['S2의 HVX 크레딧/대기큐 패턴을 그대로 이식하되, batching이 추가된 상태에서도 크레딧 계산이 맞는지 다시 검증하세요.'],
+    verify:['크레딧 고갈 시 큐잉이 정상 동작하는지','큐가 무한정 쌓이지 않고 상한이 있는지'],
+    caution:['S2 코드를 그대로 복붙하면 batching 때문에 패킷 크기 가정이 달라져 있을 수 있습니다 — 반드시 fNIRS 패킷 크기 기준으로 재검증하세요.'],
     checks:[
-      {id:'d11-1', text:'dark-frame subtraction 알고리즘 구현·검증'},
-      {id:'d11-2', text:'음수/이상값 처리 로직 구현'},
+      {id:'d11-1', text:'HVX 크레딧/대기큐 이식'},
+      {id:'d11-2', text:'크레딧 고갈 시나리오 테스트'},
+      {id:'d11-3', text:'큐 상한 설정 확인'},
     ]},
- 12:{ tips:[
-      'rigid vs flex SNR 벤치마크(약 6.4~12.7dB)를 SQI 임계치 산정의 출발점으로 쓰세요.',
-      '가속도계가 있다면 모션 크기와 SQI 저하 사이의 상관관계를 같이 확인하세요.'],
-    verify:['앉기/걷기/오르기 각 조건에서 SQI 플래그가 논문 SNR 수치 범위와 일치하는 지점에서 정확히 동작하는지'],
-    caution:['임계값을 너무 타이트하게 잡으면 정상 데이터도 저품질로 오분류될 수 있습니다 — 실측 데이터로 오분류율을 꼭 확인하세요.'],
+ 12:{ tips:['watchdog는 Acquisition Task가 죽었을 때 가장 먼저 걸리도록 kick 주기를 설계하세요 — BLE 쪽 장애로 워치독이 죽으면 오탐입니다.'],
+    verify:['I2C 통신 실패(AS7341 무응답) 시 자동 재시도/복구가 되는지','watchdog reset 후 원인 플래그가 남는지'],
+    caution:['watchdog가 너무 타이트하면 정상 상황에서도 오탐 리셋이 발생할 수 있습니다 — margin을 두고 실측 기반으로 조정하세요.'],
     checks:[
-      {id:'d12-1', text:'SQI 알고리즘 구현'},
-      {id:'d12-2', text:'3가지 모션 조건 실측 SNR 확보'},
-      {id:'d12-3', text:'임계값 오분류율 확인'},
+      {id:'d12-1', text:'Watchdog 구현 및 kick 주기 설정'},
+      {id:'d12-2', text:'I2C fault 주입 후 자동복구 확인'},
+      {id:'d12-3', text:'reset reason 플래그 기록'},
     ]},
- 13:{ tips:['raw counts(3파장 개별)+상태바이트+seq number+timestamp를 한 프레임에 담아, 나중에 Δ[H2O] 등 파생값을 언제든 재계산할 수 있게 설계하세요.'],
-    verify:['패킷 크기가 BLE MTU 안에 들어가는지','버전 필드로 향후 포맷이 바뀌어도 하위호환이 가능한지'],
-    caution:['펌웨어에서 필터링/보정된 값만 보내고 raw를 버리면, 나중에 알고리즘을 바꿔도 재분석이 불가능해집니다 — raw 보존 원칙을 반드시 지키세요.'],
+ 13:{ tips:['온도 모니터링은 AS7341 읽기와 별도 주기로 동작해도 되지만, 배터리/온도 이벤트가 발생하면 Acquisition Task의 우선순위를 침범하지 않게 하세요.'],
+    verify:['배터리 저전압/고온 이벤트가 error log에 정확히 기록되는지','이번 주(Rev0~3) 산출물이 문서화된 상태인지'],
+    caution:['오늘 주간 리뷰에서 Rev0~3 전체 진행상황을 팀과 점검하고, Day16 재산정 회의를 위한 데이터(지연, 이슈)를 미리 정리해두세요.'],
     checks:[
-      {id:'d13-1', text:'패킷 구조체 정의 및 문서화'},
-      {id:'d13-2', text:'MTU 내 크기 확인'},
-      {id:'d13-3', text:'버전 필드 하위호환 테스트'},
+      {id:'d13-1', text:'Battery/Temperature monitor 구현'},
+      {id:'d13-2', text:'Error log 포맷 확정 및 기록 확인'},
+      {id:'d13-3', text:'Rev0~3 주간 리뷰 완료'},
     ]},
- 14:{ tips:['sequence number로 host 쪽에서 100% 드랍 검출이 가능하게 하고, ring buffer overflow는 silent loss 없이 flag+count로 남기세요.'],
-    verify:['connection interval 변경/간헐적 혼잡 상황에서도 acquisition 주기 자체는 영향받지 않는지(AT-02)'],
-    caution:['재전송 로직을 너무 공격적으로 하면 배터리 소모가 급증합니다 — 재전송 횟수 상한과 폐기 정책을 함께 설계하세요.'],
+ 14:{ tips:['열보호 상태머신(Normal→Warning→Duty감소→OFF)을 구현하면서, S1의 GPREGRET 상태보존 패턴을 여기에도 적용할지 결정하세요.'],
+    verify:['리셋 원인(watchdog/전원/소프트웨어 등)이 구분되어 기록되는지','열보호 상태가 리부팅 후에도 복원되는지 (적용하기로 했다면)'],
+    caution:['온도 threshold/hysteresis 값은 아직 미확정 항목입니다 — 임의로 확정하지 말고 임시값으로 구현한 뒤 표시해두세요.'],
     checks:[
-      {id:'d14-1', text:'SEQ 연속성 검증 테스트'},
-      {id:'d14-2', text:'강제 혼잡 상황 재현 테스트'},
-      {id:'d14-3', text:'재전송 상한/폐기 정책 구현'},
+      {id:'d14-1', text:'Reset reason 관리 구현'},
+      {id:'d14-2', text:'열보호 상태머신 구현 (임시 threshold)'},
+      {id:'d14-3', text:'GPREGRET 적용 여부 결정 및 문서화'},
     ]},
- 15:{ tips:['APK가 기대하는 BLE GATT characteristic/notify 포맷을 먼저 문서로 맞추고 시작하면, 펌웨어/앱 어느 쪽 버그인지 나중에 구분하기 쉽습니다.'],
-    verify:['실시간 스트리밍 중 앱 UI 프레임레이트 저하가 없는지','로깅 파일 포맷이 후처리 스크립트와 호환되는지'],
-    caution:['인터페이스 스펙 문서 없이 진행하면 "값이 이상하다"는 이슈가 생겼을 때 원인 파악에 시간을 많이 씁니다.'],
+ 15:{ tips:['오늘은 새 기능을 추가하지 말고, 지금까지 만든 Rev1(정확한 데이터)+Rev2(BLE)+Rev3(신뢰성)가 동시에 몇 시간이라도 끊기지 않고 도는지만 확인하세요.'],
+    verify:['acquisition+BLE가 최소 1시간 이상 연속 동작하며 데이터 유실/hang이 없는지'],
+    caution:['여기서 발견되는 이슈가 Day16 재산정 회의의 핵심 입력값입니다 — 이슈를 숨기지 말고 전부 기록하세요.'],
     checks:[
-      {id:'d15-1', text:'GATT 인터페이스 스펙 문서 공유'},
-      {id:'d15-2', text:'앱 연동 실제 테스트'},
-      {id:'d15-3', text:'로깅 포맷 호환성 확인'},
+      {id:'d15-1', text:'1시간 이상 연속 스모크 테스트 수행'},
+      {id:'d15-2', text:'발견 이슈 목록 작성'},
+      {id:'d15-3', text:'Day16 재산정 회의 자료 준비'},
     ]},
- 16:{ tips:['3-4(온보드 저장)는 "목록 재검토" 탭에서 축소가 제안된 항목입니다 — 정책만 가볍게 결정하고, EEG/EOG epoch 동기화(3-5)에 시간을 더 쓰세요.'],
-    verify:['30초 epoch/5초 window 경계와 NIRS 타임스탬프가 정확히 정렬되는지(오차 목표: 수십ms 이내)'],
-    caution:['저장정책에 과도하게 공수를 들이지 마세요 — 짧은 BLE 단절 시 유실 허용범위 정도만 정의해도 충분합니다.'],
+ 16:{ tips:['이 날은 코드보다 "판단"이 중심입니다 — Rev0~3 실측(크로스토크 검증 결과, 스모크 테스트 안정성, 발견된 이슈)을 근거로 Rev4~7 일정을 팀과 다시 합의하세요.'],
+    verify:['미확정 항목 중 이 시점에 결정 가능한 것들(BLE 파라미터, ring buffer 길이 등)이 실측 데이터를 근거로 결정됐는지'],
+    caution:['기존 목표일에 얽매여 무리하게 Rev4~7을 욱여넣지 마세요 — 원 문서 자체가 "스코프가 양산형으로 바뀌었으니 재합의하라"고 명시하고 있습니다.'],
     checks:[
-      {id:'d16-1', text:'저장정책 문서화(구현 최소화)'},
-      {id:'d16-2', text:'EEG/EOG epoch 경계 정렬 오차 측정'},
-    ]},
- 17:{ tips:['논문의 초기 가열속도(~0.7℃/min, 첫 5분)를 기준으로 온도 폴링 주기를 설계하고, 41℃ 도달 훨씬 전에 Warning 단계로 들어가게 하세요.'],
-    verify:['Warning → duty 감소 → LED off 3단계가 실제로 순서대로 동작하는지','온도 센서가 응답하지 않을 때 자동으로 LED가 꺼지는 fail-safe가 있는지'],
-    caution:['온도 센서 자체의 응답 지연(열용량)을 고려하지 않으면, 실제 피부온도보다 늦게 반응해서 41℃를 넘길 수 있습니다 — 센서 위치와 응답특성을 꼭 확인하세요.'],
-    checks:[
-      {id:'d17-1', text:'3단계 보호로직(Warning→duty감소→OFF) 구현'},
-      {id:'d17-2', text:'센서 fail-safe 구현'},
-      {id:'d17-3', text:'최악조건(연속 최대 duty) 온도 프로파일 확보, 41℃ 미만 확인'},
-    ]},
- 18:{ tips:['업데이트 중 전원 차단/BLE 연결 끊김 시나리오를 반드시 테스트하고, 롤백 가능한 dual-bank(또는 backup partition) 구조를 권장합니다.',
-      'OTA는 원래 v1.1로 미뤘다가 복원된 항목이라 일정이 타이트합니다 — 최소기능(업데이트+검증된 롤백)만 우선 구현하세요.'],
-    verify:['업데이트 실패 시 기존 펌웨어로 정상 부팅되는지(브릭 되지 않는지)','업데이트 후 버전 태그가 정확히 갱신되는지'],
-    caution:['고급 기능(델타 업데이트 등)에 욕심내지 말고, 검증된 최소 기능으로 오늘 안에 끝내세요.'],
-    checks:[
-      {id:'d18-1', text:'정상 업데이트 성공 확인'},
-      {id:'d18-2', text:'업데이트 중 강제 전원차단 후 복구 확인'},
-      {id:'d18-3', text:'롤백 동작 확인'},
-      {id:'d18-4', text:'버전 태그 갱신 확인'},
-    ]},
- 19:{ tips:['5.5시간 연속구동 테스트는 실시간으로 지켜볼 필요 없이, 하룻밤 재워두고 다음 날 로그를 분석하는 방식으로 진행하세요.','테스트 중 온습도 등 환경 조건도 같이 기록해두면 나중에 재현이 안 될 때 원인 추적이 쉽습니다.'],
-    verify:['메모리 누수(ring buffer, heap fragmentation)가 없는지','타임스탬프 드리프트가 수치로 확인 가능한지'],
-    caution:['환경 조건을 기록하지 않으면, 나중에 같은 테스트가 재현되지 않을 때 원인을 못 찾습니다.'],
-    checks:[
-      {id:'d19-1', text:'5.5시간 이상 연속구동 로그 확보'},
-      {id:'d19-2', text:'메모리/heap 누수 없음 확인'},
-      {id:'d19-3', text:'타임스탬프 드리프트 수치화'},
-      {id:'d19-4', text:'펌웨어 파라미터 문서 최종본 작성'},
-    ]},
- 20:{ tips:['AT 체크리스트 탭을 그대로 실행 체크리스트로 사용하세요 — 하나씩 실행하며 체크하고, 실패 항목은 원인이 된 Day로 돌아가 재작업하세요.'],
-    verify:['AT-01~12 전체 pass 여부','AT-07(Thermal), AT-08(Runtime) 같은 안전/장시간 항목은 재현성 있게 2회 이상 확인'],
-    caution:['오늘 발견된 이슈를 freeze 전날(D21)로 몰아서 고치면 위험합니다 — 최대한 오늘 안에 마무리하세요.'],
-    checks:[
-      {id:'d20-1', text:'AT-01~12 전체 실행 및 결과 기록'},
-      {id:'d20-2', text:'실패 항목 0건(또는 원인·완화조치 기록)'},
-      {id:'d20-3', text:'회귀 테스트 리포트 작성'},
-    ]},
- 21:{ tips:['freeze 직전에 clean build(캐시 없이)로 한 번 더 확인하고, 버전 태그와 커밋 해시를 릴리즈 노트에 남기세요.'],
-    verify:['freeze된 바이너리가 AT 체크리스트를 통과한 버전과 정확히 동일한 커밋인지(빌드 재현성)'],
-    caution:['freeze 이후 "사소한 수정"이라며 코드를 더 건드리면 검증되지 않은 버전이 나가는 셈입니다 — freeze 후 변경은 반드시 새 버전(v1.0.1 등)으로 관리하세요.'],
-    checks:[
-      {id:'d21-1', text:'Clean build 및 커밋 해시 확인'},
-      {id:'d21-2', text:'버전 태깅·릴리즈 노트 작성'},
-      {id:'d21-3', text:'freeze 커밋 브랜치 보호 설정'},
+      {id:'d16-1', text:'Rev0~3 실측 데이터 정리 및 공유'},
+      {id:'d16-2', text:'Rev4~7 일정 재수립 회의 진행'},
+      {id:'d16-3', text:'팀 합의된 새 목표일 문서화'},
     ]},
 };
 
@@ -489,13 +444,21 @@ const CONTRADICTIONS = [
 ];
 
 /* ============================== BUSINESS-DAY CALENDAR ============================== */
-// Korean public holidays that fall inside the project window and must be excluded
-// from the working-day count (confirmed with the team on 2026-09-15):
-//  - 9/24, 9/25: 추석 연휴 (Chuseok) — 9/26 is already a Saturday, so no extra exclusion needed there
-//  - 10/5: 개천절 대체공휴일 (Gaecheonjeol substitute holiday, since 10/3 fell on a Saturday)
-//  - 10/9: 한글날 (Hangul Day, fixed annual public holiday) — confirmed with the team on 2026-09-15
-//    to also be treated as a day off, even though it coincided with this project's own target date.
-const HOLIDAYS = new Set(['2026-09-24', '2026-09-25', '2026-10-05', '2026-10-09']);
+// Schedule scope: Rev0~Rev3 only (16 working days), per the 2026-09-14 architecture
+// decision document. Rev4~Rev7 have no committed dates yet — they are re-planned at
+// the Day16 checkpoint using Rev0~3 actuals, per the document's own recommendation.
+//
+// Excluded dates:
+//  - 9/24, 9/25: 추석 연휴 (Chuseok)
+//  - 10/5: 개천절 대체공휴일 (Gaecheonjeol substitute holiday)
+//  - 10/9: 한글날 (Hangul Day) — confirmed with the team on 2026-09-15
+//  - 10/8: NOT a holiday. The source document's own Day-by-day table (§9) jumps directly
+//    from Day15 (10/7 Wed) to the 10/9 holiday note to Day16 (10/12 Mon), without ever
+//    assigning 10/8 (Thu) a Day number. That looks like an oversight in the source doc,
+//    but this tracker follows the document exactly rather than silently "fixing" it —
+//    10/8 is treated the same way as a holiday (a numbered-day gap) and shown as such.
+//    Flagged for the team in the "미확정 항목" tab (see item about 10/8).
+const HOLIDAYS = new Set(['2026-09-24', '2026-09-25', '2026-10-05', '2026-10-08', '2026-10-09']);
 function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function isBizDay(d){ const w=d.getDay(); return w!==0 && w!==6 && !HOLIDAYS.has(dateKey(d)); }
 function genBizDays(start,end){
@@ -503,11 +466,11 @@ function genBizDays(start,end){
   while(d<=end){ if(isBizDay(d)) out.push(new Date(d)); d.setDate(d.getDate()+1); }
   return out;
 }
-const CAL_START = new Date(2026,8,11);
-const CAL_SEARCH_END = new Date(2026,10,20); // generous upper bound; we only keep the first 21 valid business days
-const BIZDAYS = genBizDays(CAL_START, CAL_SEARCH_END).slice(0,21); // 21 *working* business days (weekends + holidays excluded)
+const CAL_START = new Date(2026,8,14); // 2026-09-14, Day1 per the architecture document
+const CAL_SEARCH_END = new Date(2026,9,25);
+const BIZDAYS = genBizDays(CAL_START, CAL_SEARCH_END).slice(0,16); // Rev0~3 = 16 working days
 const N_DAYS = BIZDAYS.length;
-const TARGET_DATE = BIZDAYS[N_DAYS-1]; // last working day in the sequence = new target/Due date
+const TARGET_DATE = BIZDAYS[N_DAYS-1]; // Day16 (10/12) — Rev0~3 checkpoint / re-planning point, NOT a final ship date
 const DUE_DATE = TARGET_DATE;
 const TARGET_IDX = N_DAYS;
 const DUE_IDX = N_DAYS;
@@ -533,7 +496,6 @@ const DEFAULT_STATE = {
   taskProgress: Object.fromEntries(TASKS.map(t=>[t.id, t.def])),
   atChecked: Object.fromEntries(AT_ITEMS.map(a=>[a.id, false])),
   riskResolved: Object.fromEntries(RISKS.map(r=>[r.id, !!r.def])),
-  reviewDecided: Object.fromEntries([...REVIEW_DOWNGRADE, ...REVIEW_ADD].map(r=>[r.id, false])),
   dayChecks: Object.fromEntries(Object.values(DAY_DETAILS).flatMap(d=>d.checks).map(c=>[c.id, false])),
   updatedAt: null,
 };
@@ -578,7 +540,6 @@ async function loadState(){
       STATE.taskProgress = Object.assign({}, DEFAULT_STATE.taskProgress, saved.taskProgress||{});
       STATE.atChecked    = Object.assign({}, DEFAULT_STATE.atChecked, saved.atChecked||{});
       STATE.riskResolved = Object.assign({}, DEFAULT_STATE.riskResolved, saved.riskResolved||{});
-      STATE.reviewDecided = Object.assign({}, DEFAULT_STATE.reviewDecided, saved.reviewDecided||{});
       STATE.dayChecks = Object.assign({}, DEFAULT_STATE.dayChecks, saved.dayChecks||{});
       STATE.updatedAt = saved.updatedAt || null;
     }
@@ -609,13 +570,13 @@ function overallAvg(){
 /* ============================== RENDER ============================== */
 const TABS = [
   {id:'overview', label:'개요'},
+  {id:'arch', label:'아키텍처 결정'},
   {id:'analysis', label:'논문 재분석'},
   {id:'tasks', label:'Task 체크리스트'},
   {id:'gantt', label:'간트차트'},
   {id:'dayplan', label:'Day Plan'},
   {id:'at', label:'AT 체크리스트'},
-  {id:'risk', label:'리스크'},
-  {id:'review', label:'목록 재검토'},
+  {id:'risk', label:'미확정 항목'},
 ];
 function buildNav(){
   const nav = document.getElementById('tabnav');
@@ -655,23 +616,25 @@ function renderOverview(){
   el.innerHTML = `
     <h2>프로젝트 개요</h2>
     <table class="metabox">
-      <tr><td class="k">기준 논문</td><td>Ban et al., "A soft wearable NIRS system for detecting brain water dynamics linked to glymphatic activity during sleep", Sci. Adv. 12, eaad2056 (2026)</td></tr>
-      <tr><td class="k">목표 완료일</td><td>2026-10-15 (목) — 추석 연휴(9/24~25), 개천절 대체휴일(10/5), 한글날(10/9) 총 4일을 실제 휴무로 반영해 근무일 21일을 유지하면서 10/9였던 목표가 10/15로 순연되었습니다.</td></tr>
+      <tr><td class="k">기준 문서</td><td>① Ban et al., Sci. Adv. 12, eaad2056 (2026) — 논문 재현 스펙/AT 기준 · ② "fNIRS 양산형 펌웨어 아키텍처 및 개발 계획 (결론, 초안)" Rev.0, 2026-09-14 — TedreamS1 구조/NCS_TedreamS2 프로토콜/Zephyr 아키텍처 결정</td></tr>
+      <tr><td class="k">프로젝트 성격</td><td>논문 재현용 프로토타입 확장이 아니라 <b>신규 양산형 디바이스 재설계</b>. 구조는 S1, 프로토콜 관례는 S2를 계승하고 OS는 Zephyr(NCS)로 신규 결정</td></tr>
+      <tr><td class="k">현 단계 목표</td><td>Rev0(구조/프로토콜 이식)~Rev3(신뢰성) 확보 — 16근무일. Rev4(신호검증)~Rev7(양산화)은 <b>Day16(10/12) 재산정 지점</b>에서 실측 기반으로 다시 수립 (일정 미확정)</td></tr>
       <tr><td class="k">담당</td><td>Wade</td></tr>
-      <tr><td class="k">버전</td><td>Rev.3 (인터랙티브 트래커, LED 640nm 파트넘버 확정 반영)</td></tr>
+      <tr><td class="k">버전</td><td>Rev.4 (양산형 아키텍처 반영 — Zephyr/S1/S2 기반으로 전면 재구성)</td></tr>
     </table>
 
     <div class="overview-grid">
       <div class="card">
         <h2 style="margin-top:0; border:none;">그룹별 진행률</h2>
         ${groupBars}
+        <p class="hint" style="margin:8px 0 0 0;">Rev4~7은 아직 일정이 없어 진행률 계산에서 제외됩니다 (회색으로 표시).</p>
       </div>
       <div class="card">
         <h2 style="margin-top:0; border:none;">사용 방법</h2>
         <p class="hint" style="margin:0 0 8px 0;">
         1. <b>Task 체크리스트</b> 탭에서 % 를 입력하거나 빠른 버튼(0/50/100)을 누르면 자동 저장됩니다.<br>
         2. 100% 가 되면 완료 체크박스가 자동으로 체크되고, <b>간트차트</b> 탭의 막대가 같은 값으로 채워집니다.<br>
-        3. <b>AT 체크리스트</b>·<b>리스크</b> 탭의 체크박스도 같은 방식으로 즉시 저장됩니다.<br>
+        3. <b>AT 체크리스트</b>·<b>미확정 항목</b> 탭의 체크박스도 같은 방식으로 즉시 저장됩니다.<br>
         4. 이 브라우저(이 아티팩트)에 로컬로 저장되므로, 다시 열어도 마지막 상태가 유지됩니다.
         </p>
       </div>
@@ -682,14 +645,18 @@ function renderOverview(){
 function renderAnalysis(){
   const el = document.getElementById('tab-analysis');
   el.innerHTML = `
-    <h2>1. 논문 재분석 — 수정/추가 사항</h2>
+    <h2>2. 논문 재분석 — 수정/추가 사항</h2>
+    <div class="scope-note">
+      <b>참고:</b> 2026-09-14 아키텍처 결정 문서 이후 프로젝트 성격이 "논문 재현"에서 <b>"양산형 디바이스 재설계"</b>로 확장되었습니다.
+      아래 스펙 비교·모순 분석은 AT 체크리스트(검증 기준)의 근거 자료로는 계속 유효하지만, 개발 범위 전체를 대표하지는 않습니다. 아키텍처 전반은 <b>"아키텍처 결정"</b> 탭을 참고하세요.
+    </div>
     <div class="card">
       <table>
         <tr><th style="width:13%">항목</th><th style="width:22%">1차 요약</th><th style="width:38%">재확인 결과</th><th>펌웨어 영향</th></tr>
         ${SPEC_ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}
       </table>
     </div>
-    <h2>1-1. 논문 내부 모순 사항 (구현 보류 대상)</h2>
+    <h2>2-1. 논문 내부 모순 사항 (구현 보류 대상)</h2>
     <p class="hint">아래 모순은 저자 코드·공개자료 확인 전까지 펌웨어·서버 어느 쪽에도 구현하지 않습니다.</p>
     ${CONTRADICTIONS.map(c=>`<div class="contra"><b>${c[0]}</b><div style="margin-top:4px;">${c[1]}</div></div>`).join('')}
   `;
@@ -714,7 +681,7 @@ function renderTasks(){
         <td class="center" style="width:7%;">${t.owner}</td>
         <td class="center" style="width:8%;"><span class="prio ${t.prio}">${t.prio}</span></td>
         <td style="width:18%;">
-          ${t.excl ? `<span class="note">이관됨</span>` : `
+          ${t.excl ? `<span class="note">일정 미확정</span>` : `
           <div class="pctrow">
             <input type="number" class="pctinput" min="0" max="100" step="5" value="${pct}" data-task-pct="${t.id}">
             <span>%</span>
@@ -729,7 +696,7 @@ function renderTasks(){
     });
   });
   el.innerHTML = `
-    <h2>2. Task 체크리스트 (라이브 진행률)</h2>
+    <h2>3. Task 체크리스트 (라이브 진행률)</h2>
     <p class="hint">% 를 수정하면 자동 저장되고, 아래 <b>간트차트</b> 탭의 막대 채움 정도가 즉시 함께 바뀝니다. 100%가 되면 완료 체크박스가 자동으로 체크됩니다.</p>
     <div class="card" style="padding:0; overflow-x:auto;">
       <table>
@@ -775,7 +742,7 @@ function renderGantt(){
   TASKS.forEach(t=>{
     let cells = '';
     if(t.excl){
-      cells = `<td class="daycell" colspan="${N_DAYS}" style="text-align:left; padding-left:8px; color:#aaa; font-size:10.5px;">v1.1로 이관 — 일정에서 제외</td>`;
+      cells = `<td class="daycell" colspan="${N_DAYS}" style="text-align:left; padding-left:8px; color:#aaa; font-size:10.5px;">${t.note}</td>`;
     } else {
       for(let i=1;i<=N_DAYS;i++){
         if(i<t.start || i>t.end){
@@ -798,11 +765,11 @@ function renderGantt(){
   });
 
   el.innerHTML = `
-    <h2>3. 시각적 간트차트 (영업일 기준, 진행률 실시간 반영)</h2>
+    <h2>4. 시각적 간트차트 (Rev0~3, 영업일 기준, 진행률 실시간 반영)</h2>
     <div class="legend">
       ${GROUPS.map(g=>`<span><span class="sw" style="background:${g.color}"></span>${g.name}</span>`).join('')}
     </div>
-    <p class="hint"><span style="color:var(--due); font-weight:700;">■ 목표/Due(10/15)</span> 열이 강조 표시됩니다. 주말과 공휴일(추석 9/24~25, 개천절 대체휴일 10/5, 한글날 10/9)이 축에서 완전히 제외되어 있습니다.
+    <p class="hint"><span style="color:var(--due); font-weight:700;">■ Day16 재산정 지점(10/12)</span> 열이 강조 표시됩니다. 주말과 공휴일(추석 9/24~25, 개천절 대체휴일 10/5, 한글날 10/9)이 축에서 완전히 제외되어 있습니다. Rev4~7은 일정 미확정이라 이 간트차트에는 표시되지 않습니다 (Task 체크리스트에서 회색으로 확인 가능).
     막대는 <b>Task 체크리스트</b>의 진행률과 항상 동일한 값을 보여줍니다.</p>
     <div class="card ganttscroll">
       <table class="gantt">
@@ -859,8 +826,8 @@ function renderDayplan(){
   }).join('');
 
   el.innerHTML = `
-    <h2>4. Week/Day 기준 상세 실행계획 (영업일 기준)</h2>
-    <p class="hint">주말(토/일)과 공휴일(추석 연휴 9/24~9/25, 개천절 대체휴일 10/5, 한글날 10/9)을 모두 제외했습니다. 9/11(금)부터 순수 근무일 21일을 채우면 목표 완료일이 10/9 → <b>10/15(목)</b>로 순연됩니다.</p>
+    <h2>5. Week/Day 기준 상세 실행계획 (Rev0~3, 영업일 기준)</h2>
+    <p class="hint">주말(토/일)과 공휴일(추석 연휴 9/24~9/25, 개천절 대체휴일 10/5, 한글날 10/9)을 모두 제외했습니다. 9/14(월)부터 근무일 16일이 Rev0~3 범위이며, <b>10/12(월)</b>이 Rev4~7 재산정 지점입니다. (10/8(목)은 원본 문서 일정표에 Day 번호 없이 누락되어 있어, 이 트래커도 동일하게 비워뒀습니다 — "미확정 항목" 탭 참고)</p>
     <p class="hint">행을 클릭하면 그날의 개발 팁·검증 사항·주의 사항과 셀프 체크리스트가 펼쳐집니다. 체크는 자동 저장됩니다.</p>
     <div class="card" style="padding:0; overflow-x:auto;">
       <table>
@@ -893,7 +860,7 @@ function renderDayplan(){
 function renderAT(){
   const el = document.getElementById('tab-at');
   el.innerHTML = `
-    <h2>6. Acceptance Test 체크리스트 (v1.0 해당 항목)</h2>
+    <h2>6. Acceptance Test 체크리스트</h2>
     <p class="hint">체크하면 자동 저장되고, 상단 헤더의 "AT 통과" 카운트가 즉시 갱신됩니다.</p>
     <div class="card">
       ${AT_ITEMS.map(a=>`
@@ -916,8 +883,8 @@ function renderAT(){
 function renderRisk(){
   const el = document.getElementById('tab-risk');
   el.innerHTML = `
-    <h2>5. 리스크 및 확인 필요 사항</h2>
-    <p class="hint">해결/확인된 항목은 체크하면 자동 저장되고 흐리게 표시됩니다.</p>
+    <h2>7. 미확정 항목 (팀 논의 필요, 승인 전 해소)</h2>
+    <p class="hint">2026-09-14 아키텍처 결정 문서 §11 기준입니다. 팀 논의로 결정되면 체크하세요 — 체크한 항목은 자동 저장되고 흐리게 표시됩니다. 이 항목들이 해소되기 전까지 본 아키텍처 문서는 정식 승인 문서로 간주하지 않습니다.</p>
     <div class="card">
       ${RISKS.map(r=>`
         <div class="riskitem ${STATE.riskResolved[r.id]?'resolved':''}" data-risk-row="${r.id}">
@@ -936,62 +903,96 @@ function renderRisk(){
   });
 }
 
-function renderReview(){
-  const el = document.getElementById('tab-review');
+
+function renderArchitecture(){
+  const el = document.getElementById('tab-arch');
   el.innerHTML = `
-    <h2>7. 목록 재검토 — 불필요 후보 / 추가 권장</h2>
-    <p class="hint">처음 전달된 간트차트 21개 항목 + 추가된 항목을 다시 검토한 결과입니다. 결정 여부를 체크하면 저장됩니다 (Task 목록 자체는 자동으로 바뀌지 않으며, 결정 후 별도 반영을 요청해 주세요).</p>
-
-    <h3 style="font-size:13px; margin:14px 0 6px 0;">A. 재고려 후보 — 원 목록에 있으나 우선순위 재검토 대상</h3>
-    <div class="card">
-      ${REVIEW_DOWNGRADE.map(r=>`
-        <div class="riskitem" data-review-row="${r.id}">
-          <input type="checkbox" data-review="${r.id}" ${STATE.reviewDecided[r.id]?'checked':''}>
-          <div>
-            <b>${r.title}</b>
-            <div style="margin-top:3px; font-size:12.3px; color:var(--dim);">${r.body}</div>
-          </div>
-        </div>`).join('')}
+    <h2>1. 아키텍처 결정 요약 (2026-09-14 문서 기반)</h2>
+    <div class="scope-note">
+      <b>프로젝트 성격 변경:</b> fNIRS는 신규 <b>양산형 디바이스</b>로 재정의되었습니다. 기존 테스트 디바이스는 센서 연구개발/알고리즘 검증용 프로토타입이었고, 이번엔 처음부터 양산 기준으로 재설계합니다.
+      다만 사내 자산을 명시적으로 차용합니다 — <b>구조</b>는 <code>TedreamS1</code>(nRF5 SDK/FreeRTOS), <b>프로토콜 관례</b>는 <code>NCS_TedreamS2</code>(NCS/Zephyr 전환 선례), <b>베이스 플랫폼</b>은 신규 결정으로 <b>Nordic nRF Connect SDK + Zephyr OS</b>입니다.
+      연구용 프로토타입 코드 자체는 확장하지 않되, 논문 재현 사양(파장/샘플링레이트/전력 등)은 검증 기준(AT)으로 계승합니다.
     </div>
 
-    <h3 style="font-size:13px; margin:16px 0 6px 0;">B. 추가 권장 — 실제 개발 목표를 위해 필요하나 현재 목록에 없음</h3>
-    <div class="card">
-      ${REVIEW_ADD.map(r=>`
-        <div class="riskitem" data-review-row="${r.id}">
-          <input type="checkbox" data-review="${r.id}" ${STATE.reviewDecided[r.id]?'checked':''}>
-          <div>
-            <b>${r.title}</b>
-            <div style="margin-top:3px; font-size:12.3px; color:var(--dim);">${r.body}</div>
-          </div>
-        </div>`).join('')}
+    <div class="priority-banner">
+      <b>§0 현 단계 최우선 목표:</b> 각 파장(640/680/950nm)별 LED 데이터를 분리해서, AS7341로부터 I2C를 통해 정확하게 읽어오는 것.
+      Source multiplexing 타이밍·dark-frame subtraction·SQI·batching·전력 최적화 등 세부 조정은 <b>이 정확한 raw 데이터 획득이 검증된 이후</b> 순차적으로 결정합니다.
+      아래 §5~7(전력/BLE 최적화, Thermal, 배터리 목표)은 방향성 참고용이며 지금 확정해서 구현할 항목이 아닙니다.
     </div>
 
-    <h3 style="font-size:13px; margin:16px 0 6px 0;">검토 결과 요약</h3>
-    <p class="hint" style="margin:0;">
-    나머지 19개 원 목록 항목(0-1~0-3, 1-1~1-4, 2-1~2-4, 3-1~3-3·3-5, 4-1·4-3·4-4, 5-1·5-2)은
-    논문의 3파장 LED·AS7341·BLE·41℃ 열안전·SNR 스펙과 직접 대응되어 <b>불필요한 항목으로 보이지 않습니다.</b>
-    </p>
+    <h2>2. OS/아키텍처 결정</h2>
+    <h3>2.1 Bare-metal vs Zephyr — 결론: Zephyr 채택</h3>
+    <table>
+      <tr><th style="width:16%">판단 근거</th><th>내용</th></tr>
+      <tr><td><b>채택 이유</b></td><td>BLE 연결관리/재연결, ring buffer, watchdog, 센서 fault recovery, 배터리/온도 모니터링, DFU, 생산검사 모드 등 양산 요구사항이 많고 계속 늘어날 것 — bare-metal 상태머신으로는 유지보수 비용이 빠르게 커짐</td></tr>
+      <tr><td><b>우려/보완</b></td><td>Zephyr 스케줄러/<code>k_timer</code>만으로는 100ms acquisition의 정밀도가 불충분할 수 있음 → HW RTC/TIMER 기반 트리거를 Zephyr와 병행하는 하이브리드 구조로 보완</td></tr>
+      <tr><td><b>사내 근거</b></td><td><code>NCS_TedreamS2</code>가 이미 동일한 결정(Zephyr)을 내리고 운영 중 — 신규 결정이 아니라 검증된 선례를 따르는 것</td></tr>
+    </table>
+
+    <h3>2.2 Acquisition/BLE Task 분리 원칙 (핵심 아키텍처)</h3>
+    <div class="arch-pre">LFCLK → RTC(100ms event) → ISR(timestamp+semaphore만)
+                               │
+                               ▼
+                     Acquisition Task (High)
+                     LED 제어 / AS7341 Read / Timestamp / SeqNum
+                               │
+                          Ring Buffer
+                               │
+                               ▼
+                     BLE TX Task (Medium)
+                     Packet Batching / Notify / Retry</div>
+    <ul style="font-size:12.8px; margin-top:10px;">
+      <li>Acquisition과 BLE 통신은 반드시 <b>독립적으로 동작</b> — BLE 지연/재연결/혼잡이 optical sampling timing에 영향을 주면 안 됨</li>
+      <li>ISR은 <b>timestamp capture + semaphore/event set만</b> 수행 (BLE notify, log, flash write, I2C 트랜잭션, 신호처리, malloc 금지)</li>
+      <li>Task 우선순위: <b>Acquisition &gt; BLE TX &gt; Control/Command &gt; Battery/Temperature &gt; Logging/Diagnostics</b></li>
+      <li>저전력 원칙: 모든 task는 <b>event-driven</b>(semaphore/message queue 대기), busy polling 금지</li>
+    </ul>
+
+    <h3>2.3 RTC vs TIMER</h3>
+    <ul style="font-size:12.8px;">
+      <li>10Hz(100ms) periodic wake-up은 <b>RTC/LFCLK 기반 우선</b> (저전력 유리, HF TIMER 상시구동 불필요)</li>
+      <li>LED sequencing/광 획득 내부의 us~ms 정밀 타이밍이 필요한 구간에서만 <b>HF TIMER 또는 DPPI/PPI</b>를 국소적으로 사용</li>
+      <li>예상 시퀀스: <code>RTC wake → (필요시) HFCLK enable → LED sequence → AS7341 acquisition → peripheral idle → sleep</code></li>
+    </ul>
+
+    <h2>3. S1 구조 × S2 프로토콜 × 신규 아키텍처 통합 매핑</h2>
+    <table>
+      <tr><th style="width:12%">영역</th><th style="width:24%">S1 (구조 원본)</th><th style="width:24%">S2 (프로토콜 원본)</th><th>fNIRS 신규 결정</th></tr>
+      ${ARCH_MAPPING.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}
+    </table>
+    <p class="arch-note">⚠️ S2 REVISION_HISTORY 분석 중 커밋 메시지와 실제 diff가 불일치하는 사례가 다수 발견됨(v0.1.4, v0.1.8 등). S2 프로토콜을 차용할 때는 반드시 코드 자체로 재검증하고 커밋 메시지만으로 판단하지 않는다.</p>
+
+    <h2>4. 데이터 무결성 / 패킷 설계 원칙</h2>
+    <p style="font-size:12.8px;"><b>RAW 데이터 보존 원칙:</b> MCU에서 Δ[H2O]로 가공하지 않고 3파장(640/680/950nm) raw optical intensity를 그대로 보존합니다. 추후 소광계수/DPF/필터링/캘리브레이션이 바뀌어도 원자료로 재분석 가능해야 하기 때문입니다. 역할 분리: <b>Device = acquisition 중심, PC/Server = 생리신호 처리 중심.</b></p>
+    <table>
+      <tr><th style="width:35%">필드</th><th>비고</th></tr>
+      ${ARCH_FIELDS.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}
+    </table>
+    <p class="arch-note">Gain/Integration Time은 초기 검증 단계에서는 <b>고정</b>합니다(런타임 변경 시 생리신호처럼 보이는 인위적 step 발생 가능). 자동조절이 필요해지면 변경 시점·값을 반드시 데이터에 기록합니다.</p>
+    <p class="arch-note"><b>Diagnostic telemetry 후보:</b> dropped_sample_count, max_ring_buffer_usage, ble_retry_count, disconnect_count, sensor_read_error_count, watchdog/reset_reason, battery_low_event, temperature_warning_event. Silent data loss 방지가 최우선 — overflow 발생 시 반드시 counter/flag로 기록.</p>
+
+    <h2>5~7. 전력/BLE 최적화·Thermal·배터리 — 방향성 참고용 (지금 확정 아님)</h2>
+    <table>
+      <tr><th style="width:16%">영역</th><th>방향성</th></tr>
+      <tr><td><b>전력/BLE (§5)</b></td><td>우선순위 ① LED duty cycle → ② BLE packet batching → ③ CPU sleep/Zephyr PM → ④ Peripheral runtime PM. Ring Buffer로 BLE가 5~10초 막혀도 데이터 유실 없이 버퍼 유지가 초기 목표.</td></tr>
+      <tr><td><b>Thermal (§6)</b></td><td>논문 기준 41°C 미만(최대 관측 약 40.1°C) 유지. Normal → Warning → LED current/duty 감소 → LED OFF 단계. 온도센서 위치, trip threshold, hysteresis 등은 §11 미확정.</td></tr>
+      <tr><td><b>배터리 (§7)</b></td><td>연구용 재현 기준 약 5.5h(AT-08 최소 기준 유지). 양산형 후보 목표는 최소 8h, 가능하면 10h 이상(overnight wearable 관점 — 논문 필수사양 아님, 제품 요구사항으로 신규 설정).</td></tr>
+    </table>
+
+    <p class="arch-note">위 미확정 사항들의 전체 목록과 결정 현황은 <b>"미확정 항목"</b> 탭에서 체크로 추적합니다.</p>
   `;
-  el.querySelectorAll('[data-review]').forEach(cb=>{
-    cb.addEventListener('change', e=>{
-      const id = e.target.dataset.review;
-      STATE.reviewDecided[id] = e.target.checked;
-      document.querySelector(`[data-review-row="${id}"]`).classList.toggle('resolved', e.target.checked);
-      saveState();
-    });
-  });
 }
 
 function renderAll(){
   renderHeaderStats();
   renderOverview();
+  renderArchitecture();
   renderAnalysis();
   renderTasks();
   renderGantt();
   renderDayplan();
   renderAT();
   renderRisk();
-  renderReview();
 }
 
 buildNav();
