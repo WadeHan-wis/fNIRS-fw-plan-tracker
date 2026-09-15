@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>fNIRS 양산형 FW 개발 트래커 (Zephyr/S1·S2 기반) v1.5</title>
+<title>fNIRS 양산형 FW 개발 트래커 (Zephyr/S1·S2 기반) v1.6</title>
 <style>
 :root{
   --bg:#F5F6F8; --surface:#FFFFFF; --border:#E3E6EA;
@@ -218,11 +218,11 @@ const TASKS = [
   {id:'R0-1', group:'R0', name:'S1 구조 분석 + Zephyr 매핑 설계', owner:'Wade', prio:'P1', start:1, end:1, note:'완료 (문서1 §1-1)', def:100},
   {id:'R0-2', group:'R0', name:'S2 프로토콜 상세분석, fNIRS 프로토콜 스펙 초안', owner:'Wade', prio:'P1', start:1, end:1, note:'완료 (문서1 §1-3, 패킷 필드 확정) — 계획보다 조기 완료(9/14)', def:100},
   {id:'R0-3', group:'R0', name:'NCS west workspace 생성, S1 폴더구조 이식', owner:'Wade', prio:'P1', start:1, end:1, note:'완료 (문서2 §2-1) — NCS v3.4.0, nRF52832(nrf52dk) 기준. 조기 완료(9/14)', def:100},
-  {id:'R0-4', group:'R0', name:'RTC 기반 100ms 트리거 + Acquisition(I2C)/BLE 태스크 스켈레톤 구현', owner:'Wade', prio:'P0', start:1, end:1, note:'완료 (문서2 §2-2,2-3) — nrfx RTC 직접제어+5-frame Bresenham 보정 구현, K_THREAD_DEFINE 3-task(m_i2c/m_ble/m_ctrl) 정적 등록, 빌드 검증(App Flash 15.02%/RAM 27.66%). 조기 완료(9/14)', def:100},
+  {id:'R0-4', group:'R0', name:'RTC 기반 100ms 트리거 + Acquisition(I2C)/BLE 태스크 스켈레톤 구현', owner:'Wade', prio:'P0', start:1, end:1, note:'완료 (문서2 §2-2,2-3) — nrfx RTC 직접제어+5-frame Bresenham 보정 구현, K_THREAD_DEFINE 3-task(m_i2c/m_ble/m_ctrl) 정적 등록, 빌드 검증(App Flash 15.02%/RAM 27.66%). 조기 완료(9/14). [9/15 추가] 실기 tick 간격 실측(100ms±0.03ms) 및 코드 리뷰 중 Bresenham HIGH/LOW 비율이 반전된 버그 발견 — 5프레임 합이 16381tick(목표 16384tick 대비 3tick/91.55µs 부족, 약 183ppm 오차)이었음을 확인하고 당일 수정·재검증 완료(v0.0.9)', def:100},
   {id:'R0-5', group:'R0', name:'CTRL 상태머신(재부팅/에러) 구현 + 주간 리뷰', owner:'Wade', prio:'P1', start:1, end:1, note:'코드 완료 (문서2 §2-4, m_ctrl_report_error/request_reset) — 정식 주간 리뷰는 9/18(금) 진행 예정', def:90},
-  {id:'R1-1', group:'R1', name:'AS7341 I2C 드라이버 포팅 — 파장별 raw intensity 분리 획득', owner:'Wade', prio:'P0', start:2, end:2, note:'§0 최우선 목표', def:0},
-  {id:'R1-2', group:'R1', name:'LED source multiplexing 타이밍 구현 (PWM 듀티 제어) — 크로스토크 없이 채널 분리', owner:'Wade', prio:'P0', start:3, end:3, note:'§0 최우선 목표 · LED는 PWM 방식으로 duty 제어 확정', def:0},
-  {id:'R1-3', group:'R1', name:'파장별 분리 데이터 정확성 검증 + 패킷 포맷 반영', owner:'Wade', prio:'P0', start:4, end:4, note:'§0 최우선 목표 — ⚠️ PoC v1 실제 LED3는 980nm(950nm 아님), 검증 시 실제 파장 기준 확인 필요(미확정 항목 참고)', def:0},
+  {id:'R1-1', group:'R1', name:'AS7341 I2C 드라이버 포팅 — 파장별 raw intensity 분리 획득', owner:'Wade', prio:'P0', start:2, end:2, note:'완료(9/15, v0.0.4~v0.0.7) — NIR1(&i2c1)/NIR2(&i2c0) 양쪽 다 WHOAMI(0x24)+SMUX 구성 성공. AS7341 datasheet(DS000504) 검증으로 SMUX를 F1~F4에서 F5~F8+Clear+NIR로 정정(640≈F7/680=F8 정확일치/950·980≈NIR). 소프트 리셋 후 I2C 버스 stuck 간헐 실패(NIR2 4회 중 2회)를 i2c_recover_bus()+재시도로 해결, 6/6 연속 성공 확인. 레지스터 정의는 .h로 분리.', def:100},
+  {id:'R1-2', group:'R1', name:'LED source multiplexing 타이밍 구현 (PWM 듀티 제어) — 크로스토크 없이 채널 분리', owner:'Wade', prio:'P0', start:3, end:3, note:'완료(v0.0.3) — PWM0 채널0/1/2(P0.04/05/06) 전부 정상 점등 확인(D2/D3/D4). D3/D4 미점등을 하드웨어 결함으로 1차 오판했으나(v0.0.2), nrf52dk 스탠드인 보드의 UART0 기본 pinctrl이 동일 핀(P0.05/06)을 점유하던 devicetree 충돌로 최종 확인·정정(&uart0 disable로 해결). 인디케이터 duty는 개발단계 눈부심 방지로 20%(200‰) 고정. TODO(open-item): 파장별 실제 강도 duty/시퀀싱 정책(현재 acquisition 시 3파장 동시 500‰ placeholder)은 Rev1 실측 후 확정.', def:100},
+  {id:'R1-3', group:'R1', name:'파장별 분리 데이터 정확성 검증 + 패킷 포맷 반영', owner:'Wade', prio:'P0', start:4, end:4, note:'부분 완료(9/15) — SMUX 채널 반응이 물리적으로 타당함을 정성 확인(gain=256x/ATIME≈83ms 실측: Clear 최댓값>필터채널>NIR, 실내조명 환경에 부합). nirs_sample_t를 NIR1/NIR2 2-센서 구조로 확장 완료. ⚠️ PoC v1 실제 LED3는 980nm(950nm 아님). TODO(open-item): 정량 파장분리 정확도 검증(알려진 파장 LED 직접 조사 등)은 모바일 앱 연동 후 raw data 수집 단계로 의도적으로 연기 — 필요 시 참고문헌(Ban et al., Sci.Adv. 2026) 저자에게 직접 문의 가능(architecture.md §11-5)', def:45},
   {id:'R2-1', group:'R2', name:'Ring buffer + BLE batching 구현 (S2 구조 기반)', owner:'Wade', prio:'P0', start:5, end:5, note:'ring buffer 크기/배치 구조는 S2 관례 기반 — "아키텍처 결정" 탭 참고', def:0},
   {id:'R2-2', group:'R2', name:'Packet loss 검출 + reconnect 로직', owner:'Wade', prio:'P0', start:6, end:6, note:'', def:0},
   {id:'R2-3', group:'R2', name:'BLE TX 재시도/크레딧 관리 (S2 패턴)', owner:'Wade', prio:'P1', start:7, end:7, note:'HVX 크레딧/대기큐 — batching 반영해 재검증', def:0},
@@ -316,7 +316,7 @@ const DAY_DETAILS = {
     checks:[
       {id:'d1-1', text:'[코드] west workspace + RTC/3-task 스켈레톤 + CTRL 상태머신 clean build 재현 확인'},
       {id:'d1-2', text:'[문서] S1→Zephyr 매핑 문서 + fNIRS 프로토콜 스펙(패킷 필드 포함) 존재 확인'},
-      {id:'d1-3', text:'[검증] RTC 5-frame Bresenham 보정 로직 코드 리뷰 (5프레임 합=13381 tick=500ms 산술 확인)'},
+      {id:'d1-3', text:'[검증] RTC 5-frame Bresenham 보정 로직 코드 리뷰 (5프레임 합=16384 tick=500ms 산술 확인) — 9/15 실제 검증 결과 비율 반전 버그 발견/수정(v0.0.9), 최초 표기 "13381"은 오기였음'},
       {id:'d1-4', text:'[검증] sysbuild 2-image(App+MCUboot) 빌드 및 dfu_application.zip 생성 재현 확인'},
       {id:'d1-5', text:'[문서] LED3 980nm(950nm 아님) 불일치 사실을 미확정 항목(A11)에 기록, 팀 공유'},
     ]},
@@ -506,7 +506,9 @@ const DEFAULT_STATE = {
   riskResolved: Object.fromEntries(RISKS.map(r=>[r.id, !!r.def])),
   dayChecks: Object.assign(
     Object.fromEntries(Object.values(DAY_DETAILS).flatMap(d=>d.checks).map(c=>[c.id, false])),
-    {'d1-1':true, 'd1-2':true, 'd1-3':true, 'd1-4':true, 'd1-5':true}
+    {'d1-1':true, 'd1-2':true, 'd1-3':true, 'd1-4':true, 'd1-5':true,
+     'd2-1':true, 'd2-2':true, 'd2-3':true,
+     'd3-1':true}
   ),
   dayActual: Object.assign(
     Object.fromEntries(DAYPLAN.map(d=>[d[0], {result:'', pct:0, evidence:''}])),
@@ -514,7 +516,12 @@ const DEFAULT_STATE = {
       result:'S1→Zephyr 아키텍처 매핑 문서, fNIRS 프로토콜 구조 문서(패킷 필드 확정) 작성 완료. NCS(v3.4.0) west workspace 생성, nRF52832(nrf52dk) 대상 Zephyr 프로젝트 구축 — RTC(nrfx 직접제어, 5-frame Bresenham 보정) 100ms ISR, m_i2c(prio2)/m_ble(prio4)/m_ctrl(prio6) 3-task K_THREAD_DEFINE 정적 등록, ring buffer(mutex 보호), CTRL 상태머신(m_ctrl_report_error/request_reset) 구현. sysbuild로 App+MCUboot 2-image 빌드 및 dfu_application.zip 생성까지 확인 — 원래 Day1~5(Rev0 전체)로 계획했던 범위를 하루 만에 완료.',
       pct:95,
       evidence:'문서1(S1→Zephyr 매핑 + fNIRS 프로토콜 구조, 패킷 필드 표 포함), 문서2(Zephyr 프로젝트 구조 + 빌드 로그: Application Flash 32564B/216752B 15.02%, RAM 18128B/64KB 27.66% · mcuboot Flash 34768B/48KB 70.74%, RAM 15616B/64KB 23.83%), VS Code nRF Connect 확장 + 터미널 양쪽 재현 확인'
-    }}
+    },
+    2: {
+      result:'오늘 할 일 4개(①AS7341 I2C 드라이버 포팅 ②LED On/Off PWM ③AS7341 Data Read ④RTC 100ms ISR) 전부 실기로 완료. AS7341: NIR1(&i2c1)/NIR2(&i2c0) 둘 다 WHOAMI(0x24)+SMUX 성공, datasheet(DS000504) 대조로 SMUX를 F5~F8+Clear+NIR로 정정, NIR2 간헐 실패를 i2c_recover_bus()+재시도로 근본 해결(6/6 성공). LED PWM은 v0.0.3에서 이미 D2/D3/D4 전부 정상 확인된 상태를 오늘 재확인. RTC 100ms ISR은 실측(tick 간격 100ms±0.03ms)에 더해 코드 리뷰로 Bresenham 비율반전 버그(16381≠16384tick)를 발견·당일 수정(v0.0.9) — 계획에 없던 추가 성과. 파장별 정량 검증은 모바일 연동 후로 의도적 연기(사용자 결정, architecture.md §11-5).',
+      pct:90,
+      evidence:'CHANGELOG.md v0.0.4~v0.0.9, RTT 로그(WHOAMI=0x24, SMUX 구성 성공, raw F5~F8/Clear/NIR 비영값, RTC tick 100ms 간격), config_app.h FW_VERSION_PATCH=9'
+    }
   ),
   dayGap: Object.fromEntries(DAYPLAN.map(d=>[d[0], {reason:'', cause:'', action:'', due:''}])),
   updatedAt: null,
