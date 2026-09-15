@@ -222,7 +222,7 @@ const TASKS = [
   {id:'R0-5', group:'R0', name:'CTRL 상태머신(재부팅/에러) 구현 + 주간 리뷰', owner:'Wade', prio:'P1', start:1, end:1, note:'코드 완료 (문서2 §2-4, m_ctrl_report_error/request_reset) — 정식 주간 리뷰는 9/18(금) 진행 예정', def:90},
   {id:'R1-1', group:'R1', name:'AS7341 I2C 드라이버 포팅 — 파장별 raw intensity 분리 획득', owner:'Wade', prio:'P0', start:2, end:2, note:'완료(9/15, v0.0.4~v0.0.7) — NIR1(&i2c1)/NIR2(&i2c0) 양쪽 다 WHOAMI(0x24)+SMUX 구성 성공. AS7341 datasheet(DS000504) 검증으로 SMUX를 F1~F4에서 F5~F8+Clear+NIR로 정정(640≈F7/680=F8 정확일치/950·980≈NIR). 소프트 리셋 후 I2C 버스 stuck 간헐 실패(NIR2 4회 중 2회)를 i2c_recover_bus()+재시도로 해결, 6/6 연속 성공 확인. 레지스터 정의는 .h로 분리.', def:100},
   {id:'R1-2', group:'R1', name:'LED source multiplexing 타이밍 구현 (PWM 듀티 제어) — 크로스토크 없이 채널 분리', owner:'Wade', prio:'P0', start:3, end:3, note:'완료(v0.0.3) — PWM0 채널0/1/2(P0.04/05/06) 전부 정상 점등 확인(D2/D3/D4). D3/D4 미점등을 하드웨어 결함으로 1차 오판했으나(v0.0.2), nrf52dk 스탠드인 보드의 UART0 기본 pinctrl이 동일 핀(P0.05/06)을 점유하던 devicetree 충돌로 최종 확인·정정(&uart0 disable로 해결). 인디케이터 duty는 개발단계 눈부심 방지로 20%(200‰) 고정. TODO(open-item): 파장별 실제 강도 duty/시퀀싱 정책(현재 acquisition 시 3파장 동시 500‰ placeholder)은 Rev1 실측 후 확정.', def:100},
-  {id:'R1-3', group:'R1', name:'파장별 분리 데이터 정확성 검증 + 패킷 포맷 반영', owner:'Wade', prio:'P0', start:4, end:4, note:'부분 완료(9/15) — SMUX 채널 반응이 물리적으로 타당함을 정성 확인(gain=256x/ATIME≈83ms 실측: Clear 최댓값>필터채널>NIR, 실내조명 환경에 부합). nirs_sample_t를 NIR1/NIR2 2-센서 구조로 확장 완료. ⚠️ PoC v1 실제 LED3는 980nm(950nm 아님). TODO(open-item): 정량 파장분리 정확도 검증(알려진 파장 LED 직접 조사 등)은 모바일 앱 연동 후 raw data 수집 단계로 의도적으로 연기 — 필요 시 참고문헌(Ban et al., Sci.Adv. 2026) 저자에게 직접 문의 가능(architecture.md §11-5)', def:45},
+  {id:'R1-3', group:'R1', name:'파장별 분리 데이터 정확성 검증 + 패킷 포맷 반영', owner:'Wade', prio:'P0', start:4, end:4, note:'부분 완료(9/15) — SMUX 채널 반응이 물리적으로 타당함을 정성 확인(gain=256x/ATIME≈83ms 실측: Clear 최댓값>필터채널>NIR, 실내조명 환경에 부합). nirs_sample_t를 NIR1/NIR2 2-센서 구조로 확장 완료. ⚠️ PoC v1 실제 LED3는 980nm(950nm 아님). TODO(open-item): 정량 파장분리 정확도 검증(알려진 파장 LED 직접 조사 등)은 모바일 앱 연동 후 raw data 수집 단계로 의도적으로 연기 — "미확정 항목" 탭 A12 참고(architecture.md §11-5와 동일 사안). 필요 시 참고문헌(Ban et al., Sci.Adv. 2026) 저자에게 직접 문의 가능', def:45},
   {id:'R2-1', group:'R2', name:'Ring buffer + BLE batching 구현 (S2 구조 기반)', owner:'Wade', prio:'P0', start:5, end:5, note:'ring buffer 크기/배치 구조는 S2 관례 기반 — "아키텍처 결정" 탭 참고', def:0},
   {id:'R2-2', group:'R2', name:'Packet loss 검출 + reconnect 로직', owner:'Wade', prio:'P0', start:6, end:6, note:'', def:0},
   {id:'R2-3', group:'R2', name:'BLE TX 재시도/크레딧 관리 (S2 패턴)', owner:'Wade', prio:'P1', start:7, end:7, note:'HVX 크레딧/대기큐 — batching 반영해 재검증', def:0},
@@ -276,7 +276,7 @@ const AT_ITEMS = [
 
 const RISKS = [
   {id:'A1', text:'✅ OS 확정: Zephyr(NCS) 채택 확정 — bare-metal 검토 종료, 팀 승인 완료(2026-09-15)', def:true},
-  {id:'A2', text:'✅ RTC/TIMER 하이브리드 정확도 방법 확정 — nrfx RTC 드라이버를 직접 사용(Zephyr k_timer 경유하지 않음)해 ISR 지연 최소화. 24bit RTC counter + 12bit prescaler를 LFCLK(32.768kHz) 기준으로 구성하면 100ms는 3276.8 tick로 정수가 아니므로, 매 프레임 목표 tick의 소수부 오차(0.8 tick/frame)를 누적하다가 5프레임마다 1tick을 보정하는 방식(Bresenham형 오차분산)으로 장기 drift를 방지. HFCLK/HF TIMER는 LED sequencing 등 us~ms 정밀구간에서만 국소적으로 enable.', def:true},
+  {id:'A2', text:'✅ RTC/TIMER 하이브리드 정확도 방법 확정 — nrfx RTC 드라이버를 직접 사용(Zephyr k_timer 경유하지 않음)해 ISR 지연 최소화. LFCLK(32.768kHz) 기준 100ms는 3276.8 tick로 정수가 아니므로 Bresenham형 오차분산 적용: <b>5프레임 중 4회 3277 + 1회 3276 = 16384 tick(정확히 500ms)</b>. HFCLK/HF TIMER는 LED sequencing 등 us~ms 정밀구간에서만 국소적으로 enable. ⚠️ 9/15 정정 — 최초 구현은 비율이 반전(3277 1회 + 3276 4회 = 16381 tick)되어 5프레임마다 3tick(≈91.55µs, 183ppm)씩 빨라지는 버그가 있었고, v0.0.9에서 수정·재검증 완료. 실기 실측 tick 간격 100ms±0.03ms 확인.', def:true},
   {id:'A3', text:'✅ BLE 파라미터 구조 확정(S2 계승) — Tx power -8dBm 고정, 전 패킷 32bit us 타임스탬프(S2 그대로). Connection interval은 S2 선례 범위(7.5~30ms)에서 실시간성/배터리 균형 실측 후 확정. MTU는 BLE 5.0 Extended Length 기준 최대 251byte 목표, batch size는 패킷헤더+3파장raw+seq+timestamp(샘플당 약 16~20byte) 기준으로 MTU 페이로드 내 최대 샘플 수를 역산해 결정(현재 임시값 12샘플/배치) — 정확한 실측치는 R2-1에서 확정.', def:true},
   {id:'A4', text:'✅ Ring buffer/flash logging 구조 확정(S2 계승) — ring buffer는 10Hz 기준 BLE 지연 5~10초를 버틸 용량(50~100샘플)에 안전마진을 더해 최소 100~200샘플로 설계. flash logging은 초기 버전에서는 별도 구현하지 않고, overflow 발생 시 §4 원칙대로 counter/flag만 기록 — S2에 이미 구현된 로깅 방식이 있다면 R2-1 착수 시 소스 재확인 후 재사용 여부 결정.', def:true},
   {id:'A5', text:'✅ 제품 목표 runtime 확정: 8h — 논문 근거: 110mAh×3.7V=407mWh, 논문 평균소비전력 70~75mW → 실측 재현 약 5.4~5.8h(논문 보고 5.5h와 일치). 8h 달성에 필요한 평균소비전력은 407mWh/8h≈51mW로, 논문 대비 약 30% 절감 필요 — LED PWM duty 제어(연속점등→구간점등 전환)만으로 달성 가능한 범위로 판단, Rev6에서 실측 튜닝. 10h(≈41mW, 약 44% 절감)는 배터리 용량 변경 없이는 공격적이라 1차 목표에서 제외, Rev6 실측 후 스트레치 목표로 재검토.', def:true},
@@ -286,6 +286,7 @@ const RISKS = [
   {id:'A9', text:'규제 관점 추가 안전/신뢰성 요구사항. [보류]', def:false},
   {id:'A10', text:'논문 내 모순 2건(sleep threshold 방향성, spectral band 서술) — 저자 코드/공개자료 확인 전까지 펌웨어/서버 어느 쪽에도 구현하지 않음. [보류]', def:false},
   {id:'A11', text:'[9/14 신규 발견] PoC v1 실물 보드의 LED3가 실제로는 980nm이고 950nm가 아니다 — 데이터시트/펌웨어 상수(MTE9730CP, 950nm 가정)와 실물이 불일치. 다음 리비전에서 950nm로 교체 예정이라고 하나, 그 전까지 R1-3(파장별 분리 검증) 결과 해석 시 실제 980nm 기준으로 검증해야 하며, 논문 재현 스펙(950nm) 비교 시 이 차이를 반드시 감안해야 한다. [보류 — 교체 시점/검증 방식 확인 필요]', def:false},
+  {id:'A12', text:'[9/15 결정] 파장별 정량 분리 정확도 검증(알려진 파장 LED 직접 조사 등)은 <b>모바일 앱 연동 후 raw data 수집 단계로 의도적 연기</b>. 9/15 시점에는 SMUX 채널 반응이 물리적으로 타당함을 정성 확인까지만 완료(gain=256x/ATIME≈83ms 실측: Clear 최댓값 > 필터채널 > NIR, 실내조명 환경에 부합). 따라서 R1-3은 45%로 부분 완료 처리하고 Rev2(BLE/앱 연동) 이후 재개한다 — 필요 시 참고문헌(Ban et al., Sci.Adv. 2026) 저자에게 직접 문의 가능. [진행 중 — Rev2 이후 재개 예정]', def:false},
 ];
 
 const DAYPLAN = [
@@ -316,7 +317,7 @@ const DAY_DETAILS = {
     checks:[
       {id:'d1-1', text:'[코드] west workspace + RTC/3-task 스켈레톤 + CTRL 상태머신 clean build 재현 확인'},
       {id:'d1-2', text:'[문서] S1→Zephyr 매핑 문서 + fNIRS 프로토콜 스펙(패킷 필드 포함) 존재 확인'},
-      {id:'d1-3', text:'[검증] RTC 5-frame Bresenham 보정 로직 코드 리뷰 (5프레임 합=16384 tick=500ms 산술 확인) — 9/15 실제 검증 결과 비율 반전 버그 발견/수정(v0.0.9), 최초 표기 "13381"은 오기였음'},
+      {id:'d1-3', text:'[검증] RTC 5-frame Bresenham 보정 로직 코드 리뷰 — 올바른 비율은 3277×4 + 3276×1 = 16384 tick(=500ms). 9/15 코드 리뷰에서 비율 반전(16381 tick) 버그 발견/수정(v0.0.9), 문서상 "13381"은 오기(정확히는 16381)였음'},
       {id:'d1-4', text:'[검증] sysbuild 2-image(App+MCUboot) 빌드 및 dfu_application.zip 생성 재현 확인'},
       {id:'d1-5', text:'[문서] LED3 980nm(950nm 아님) 불일치 사실을 미확정 항목(A11)에 기록, 팀 공유'},
     ]},
@@ -522,7 +523,7 @@ const DEFAULT_STATE = {
       pct:90,
       evidence:'CHANGELOG.md v0.0.4~v0.0.9, RTT 로그(WHOAMI=0x24, SMUX 구성 성공, raw F5~F8/Clear/NIR 비영값, RTC tick 100ms 간격), config_app.h FW_VERSION_PATCH=9'
     }
-  ),
+  }),
   dayGap: Object.fromEntries(DAYPLAN.map(d=>[d[0], {reason:'', cause:'', action:'', due:''}])),
   updatedAt: null,
 };
@@ -1089,7 +1090,8 @@ function renderArchitecture(){
     <ul style="font-size:12.8px;">
       <li>10Hz(100ms) periodic wake-up은 <b>RTC/LFCLK 기반</b>으로 확정 (저전력 유리, HF TIMER 상시구동 불필요)</li>
       <li><b>Zephyr <code>k_timer</code>를 거치지 않고 nrfx RTC 드라이버를 직접 사용</b> — Zephyr 커널 틱 스케줄링을 경유하면 ISR 지연이 수백 us~1ms 단위로 흔들릴 수 있어, nrfx RTC의 CC(Compare) 인터럽트를 직접 핸들링해 지연을 최소화</li>
-      <li><b>Drift 보정(Bresenham형 오차분산):</b> LFCLK 32.768kHz 기준 100ms는 3276.8 tick으로 정수가 아니므로, 매 프레임 0.8 tick의 소수부 오차가 누적됩니다. CC 값을 매번 3277로 고정하면 장기적으로 느려지고, 3276으로 고정하면 빨라집니다 → <b>5프레임마다 1회 3277, 나머지는 3276으로 교대 설정</b>(5프레임 합계 = 3276×4+3277 = 13381 tick = 정확히 500ms)해 누적 오차를 주기적으로 상쇄</li>
+      <li><b>Drift 보정(Bresenham형 오차분산):</b> LFCLK 32.768kHz 기준 100ms는 3276.8 tick으로 정수가 아니므로, 매 프레임 0.8 tick의 소수부 오차가 누적됩니다. CC 값을 매번 3276으로 고정하면 장기적으로 빨라지고, 3277로 고정하면 느려집니다 → <b>5프레임 중 4회는 3277, 1회는 3276으로 설정</b>(5프레임 합계 = 3277×4 + 3276×1 = <b>16384 tick = 정확히 500ms</b>)해 누적 오차를 주기적으로 완전 상쇄. 소수부가 0.8이므로 <b>반올림 값(3277)이 5회 중 4회</b>로 많이 나오는 것이 맞습니다.</li>
+      <li class="mono" style="color:#B33; font-size:11.5px;">⚠️ 2026-09-15 정정: 최초 구현은 이 비율이 <b>반전</b>되어 있었습니다(3277 1회 + 3276 4회 = 16381 tick). 5프레임마다 3 tick(약 91.55µs, ≈183ppm)씩 빨라지는 버그였고, 코드 리뷰로 발견해 당일 수정·재검증 완료(v0.0.9). 문서에 있던 "13381"은 단순 오기(정확히는 16381)였습니다. <b>이 문서를 보고 재구현할 때 반드시 4:1 비율을 사용하세요.</b></li>
       <li>LED sequencing/광 획득 내부의 us~ms 정밀 타이밍이 필요한 구간에서만 <b>HF TIMER 또는 DPPI/PPI</b>를 국소적으로 사용 (RTC wake 이후 필요할 때만 HFCLK enable)</li>
       <li>예상 시퀀스: <code>RTC CC 인터럽트(보정된 tick) → (필요시) HFCLK enable → LED PWM sequence → AS7341 acquisition → peripheral idle → sleep</code></li>
       <li>구현 후 반드시 오실로스코프/로직분석기로 장시간(수십분~1시간) 실측해 누적 drift가 보정 없이 방치된 경우 대비 얼마나 줄었는지 검증 (Day4, R0-4 self-check 항목)</li>
